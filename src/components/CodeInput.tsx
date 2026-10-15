@@ -25,7 +25,7 @@ export function CodeInput({ value, onChange, onComplete, autoFocus }: {
   );
 }
 
-export function AuthCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+export function AuthCard({ title, subtitle, children }: { title: string; subtitle?: string; children: import("react").ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">

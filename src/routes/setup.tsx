@@ -30,7 +30,7 @@ function SetupPage() {
   const setup = useServerFn(setupAdminAccount);
   const navigate = useNavigate();
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: import("react").FormEvent) {
     e.preventDefault();
     setError(null); setBusy(true);
     try {

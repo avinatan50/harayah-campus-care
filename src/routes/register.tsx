@@ -30,7 +30,7 @@ function RegisterPage() {
   const register = useServerFn(registerUser);
   const navigate = useNavigate();
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: import("react").FormEvent) {
     e.preventDefault();
     setError(null);
     if (fullName.trim().length < 2) return setError("יש להזין שם מלא");

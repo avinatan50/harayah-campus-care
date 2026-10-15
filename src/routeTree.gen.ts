@@ -18,6 +18,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
 import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
 import { Route as AuthenticatedStaffTasksIndexRouteImport } from './routes/_authenticated/_staff/tasks.index'
+import { Route as AuthenticatedStaffTasksIdRouteImport } from './routes/_authenticated/_staff/tasks.$id'
 import { Route as AuthenticatedStaffTasksNewRouteImport } from './routes/_authenticated/_staff/tasks.new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,12 @@ const AuthenticatedStaffTasksIndexRoute =
     path: '/tasks/',
     getParentRoute: () => AuthenticatedStaffRouteRoute,
   } as any)
+const AuthenticatedStaffTasksIdRoute =
+  AuthenticatedStaffTasksIdRouteImport.update({
+    id: '/tasks/$id',
+    path: '/tasks/$id',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 const AuthenticatedStaffTasksNewRoute =
   AuthenticatedStaffTasksNewRouteImport.update({
     id: '/tasks/new',
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks': typeof AuthenticatedStaffTasksIndexRoute
 }
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/_authenticated/_staff/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/_authenticated/_staff/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/_authenticated/_staff/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/report'
     | '/dashboard'
+    | '/tasks/$id'
     | '/tasks/new'
     | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/report'
     | '/dashboard'
+    | '/tasks/$id'
     | '/tasks/new'
     | '/tasks'
   id:
@@ -136,6 +148,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/report'
     | '/_authenticated/_staff/dashboard'
+    | '/_authenticated/_staff/tasks/$id'
     | '/_authenticated/_staff/tasks/new'
     | '/_authenticated/_staff/tasks/'
   fileRoutesById: FileRoutesById
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffTasksIndexRouteImport
       parentRoute: typeof AuthenticatedStaffRouteRoute
     }
+    '/_authenticated/_staff/tasks/$id': {
+      id: '/_authenticated/_staff/tasks/$id'
+      path: '/tasks/$id'
+      fullPath: '/tasks/$id'
+      preLoaderRoute: typeof AuthenticatedStaffTasksIdRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
     '/_authenticated/_staff/tasks/new': {
       id: '/_authenticated/_staff/tasks/new'
       path: '/tasks/new'
@@ -224,6 +244,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedStaffRouteRouteChildren {
   AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+  AuthenticatedStaffTasksIdRoute: typeof AuthenticatedStaffTasksIdRoute
   AuthenticatedStaffTasksNewRoute: typeof AuthenticatedStaffTasksNewRoute
   AuthenticatedStaffTasksIndexRoute: typeof AuthenticatedStaffTasksIndexRoute
 }
@@ -231,6 +252,7 @@ interface AuthenticatedStaffRouteRouteChildren {
 const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren =
   {
     AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+    AuthenticatedStaffTasksIdRoute: AuthenticatedStaffTasksIdRoute,
     AuthenticatedStaffTasksNewRoute: AuthenticatedStaffTasksNewRoute,
     AuthenticatedStaffTasksIndexRoute: AuthenticatedStaffTasksIndexRoute,
   }

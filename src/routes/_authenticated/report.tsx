@@ -33,7 +33,7 @@ function ReportPage() {
     navigate({ to: "/", replace: true });
   }
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: import("react").FormEvent) {
     e.preventDefault();
     if (!title.trim()) return setError("יש להזין כותרת");
     setBusy(true); setError(null);
