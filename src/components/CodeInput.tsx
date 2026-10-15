@@ -9,10 +9,10 @@ export function CodeInput({ value, onChange, onComplete, autoFocus }: {
         maxLength={4}
         value={value}
         onChange={(v) => onChange(v.replace(/\D/g, ""))}
-        onComplete={onComplete}
+        onComplete={onComplete ?? (() => {})}
         inputMode="numeric"
         pattern="^[0-9]*$"
-        autoFocus={autoFocus}
+        autoFocus={!!autoFocus}
         autoComplete="one-time-code"
       >
         <InputOTPGroup className="gap-3">

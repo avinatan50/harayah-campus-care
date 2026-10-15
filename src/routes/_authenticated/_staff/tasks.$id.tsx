@@ -1,3 +1,4 @@
+import type { Database } from "@/integrations/supabase/types";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -38,11 +39,11 @@ function TaskDetail() {
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["tasks"] });
 
-  async function update(patch: Record<string, unknown>, msg = "נשמר") {
+  async function update(patch: Database["public"]["Tables"]["tasks"]["Update"], msg = "נשמר"): Promise<void> {
     setBusy(true);
     const { error } = await supabase.from("tasks").update(patch).eq("id", id);
     setBusy(false);
-    if (error) return toast.error("השמירה נכשלה");
+    if (error) { toast.error("השמירה נכשלה"); return; }
     toast.success(msg);
     refresh();
   }
@@ -119,7 +120,7 @@ function TaskDetail() {
   );
 }
 
-function Info({ k, v, danger, extra }: { k: string; v: string; danger?: boolean; extra?: string }) {
+function Info({ k, v, danger, extra }: { k: string; v: string; danger?: boolean; extra?: string | undefined }) {
   return (
     <div>
       <dt className="text-xs text-muted-foreground">{k}</dt>
@@ -184,7 +185,7 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
     if (!body.trim()) return;
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim(), user_id: u.user!.id });
-    if (error) return toast.error("ההערה לא נשמרה");
+    if (error) { toast.error("ההערה לא נשמרה"); return; }
     setBody("");
     qc.invalidateQueries({ queryKey: ["tasks", "comments", taskId] });
   }
