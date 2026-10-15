@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as AuthenticatedStaffRouteRouteImport } from './routes/_authenticated/_staff/route'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
+import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
+import { Route as AuthenticatedStaffTasksIndexRouteImport } from './routes/_authenticated/_staff/tasks.index'
+import { Route as AuthenticatedStaffTasksIdRouteImport } from './routes/_authenticated/_staff/tasks.$id'
+import { Route as AuthenticatedStaffTasksNewRouteImport } from './routes/_authenticated/_staff/tasks.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStaffRouteRoute = AuthenticatedStaffRouteRouteImport.update({
+  id: '/_staff',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportRoute = AuthenticatedReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStaffDashboardRoute =
+  AuthenticatedStaffDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffTasksIndexRoute =
+  AuthenticatedStaffTasksIndexRouteImport.update({
+    id: '/tasks/',
+    path: '/tasks/',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffTasksIdRoute =
+  AuthenticatedStaffTasksIdRouteImport.update({
+    id: '/tasks/$id',
+    path: '/tasks/$id',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffTasksNewRoute =
+  AuthenticatedStaffTasksNewRouteImport.update({
+    id: '/tasks/new',
+    path: '/tasks/new',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/register': typeof RegisterRoute
+  '/setup': typeof SetupRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/report': typeof AuthenticatedReportRoute
+  '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
+  '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/register': typeof RegisterRoute
+  '/setup': typeof SetupRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/report': typeof AuthenticatedReportRoute
+  '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
+  '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/tasks': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/register': typeof RegisterRoute
+  '/setup': typeof SetupRoute
+  '/_authenticated/_staff': typeof AuthenticatedStaffRouteRouteWithChildren
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/report': typeof AuthenticatedReportRoute
+  '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/_authenticated/_staff/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
+  '/_authenticated/_staff/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/_authenticated/_staff/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/register'
+    | '/setup'
+    | '/home'
+    | '/report'
+    | '/dashboard'
+    | '/tasks/$id'
+    | '/tasks/new'
+    | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/register'
+    | '/setup'
+    | '/home'
+    | '/report'
+    | '/dashboard'
+    | '/tasks/$id'
+    | '/tasks/new'
+    | '/tasks'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/register'
+    | '/setup'
+    | '/_authenticated/_staff'
+    | '/_authenticated/home'
+    | '/_authenticated/report'
+    | '/_authenticated/_staff/dashboard'
+    | '/_authenticated/_staff/tasks/$id'
+    | '/_authenticated/_staff/tasks/new'
+    | '/_authenticated/_staff/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  RegisterRoute: typeof RegisterRoute
+  SetupRoute: typeof SetupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,119 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_staff': {
+      id: '/_authenticated/_staff'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedStaffRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/report': {
+      id: '/_authenticated/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof AuthenticatedReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_staff/dashboard': {
+      id: '/_authenticated/_staff/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedStaffDashboardRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/tasks/': {
+      id: '/_authenticated/_staff/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof AuthenticatedStaffTasksIndexRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/tasks/$id': {
+      id: '/_authenticated/_staff/tasks/$id'
+      path: '/tasks/$id'
+      fullPath: '/tasks/$id'
+      preLoaderRoute: typeof AuthenticatedStaffTasksIdRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/tasks/new': {
+      id: '/_authenticated/_staff/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof AuthenticatedStaffTasksNewRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
   }
 }
 
+interface AuthenticatedStaffRouteRouteChildren {
+  AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+  AuthenticatedStaffTasksIdRoute: typeof AuthenticatedStaffTasksIdRoute
+  AuthenticatedStaffTasksNewRoute: typeof AuthenticatedStaffTasksNewRoute
+  AuthenticatedStaffTasksIndexRoute: typeof AuthenticatedStaffTasksIndexRoute
+}
+
+const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren =
+  {
+    AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+    AuthenticatedStaffTasksIdRoute: AuthenticatedStaffTasksIdRoute,
+    AuthenticatedStaffTasksNewRoute: AuthenticatedStaffTasksNewRoute,
+    AuthenticatedStaffTasksIndexRoute: AuthenticatedStaffTasksIndexRoute,
+  }
+
+const AuthenticatedStaffRouteRouteWithChildren =
+  AuthenticatedStaffRouteRoute._addFileChildren(
+    AuthenticatedStaffRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedStaffRouteRoute: typeof AuthenticatedStaffRouteRouteWithChildren
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedReportRoute: typeof AuthenticatedReportRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedStaffRouteRoute: AuthenticatedStaffRouteRouteWithChildren,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedReportRoute: AuthenticatedReportRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  RegisterRoute: RegisterRoute,
+  SetupRoute: SetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
