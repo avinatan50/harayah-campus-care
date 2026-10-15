@@ -17,6 +17,8 @@ import { Route as AuthenticatedStaffRouteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
 import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
+import { Route as AuthenticatedStaffTasksIndexRouteImport } from './routes/_authenticated/_staff/tasks.index'
+import { Route as AuthenticatedStaffTasksNewRouteImport } from './routes/_authenticated/_staff/tasks.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +59,18 @@ const AuthenticatedStaffDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedStaffRouteRoute,
   } as any)
+const AuthenticatedStaffTasksIndexRoute =
+  AuthenticatedStaffTasksIndexRouteImport.update({
+    id: '/tasks/',
+    path: '/tasks/',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffTasksNewRoute =
+  AuthenticatedStaffTasksNewRouteImport.update({
+    id: '/tasks/new',
+    path: '/tasks/new',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,6 +79,8 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -73,6 +89,8 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/tasks': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,12 +102,30 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/_authenticated/_staff/tasks/new': typeof AuthenticatedStaffTasksNewRoute
+  '/_authenticated/_staff/tasks/': typeof AuthenticatedStaffTasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/register' | '/setup' | '/home' | '/report' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/register'
+    | '/setup'
+    | '/home'
+    | '/report'
+    | '/dashboard'
+    | '/tasks/new'
+    | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/register' | '/setup' | '/home' | '/report' | '/dashboard'
+  to:
+    | '/'
+    | '/register'
+    | '/setup'
+    | '/home'
+    | '/report'
+    | '/dashboard'
+    | '/tasks/new'
+    | '/tasks'
   id:
     | '__root__'
     | '/'
@@ -100,6 +136,8 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/report'
     | '/_authenticated/_staff/dashboard'
+    | '/_authenticated/_staff/tasks/new'
+    | '/_authenticated/_staff/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,16 +205,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffDashboardRouteImport
       parentRoute: typeof AuthenticatedStaffRouteRoute
     }
+    '/_authenticated/_staff/tasks/': {
+      id: '/_authenticated/_staff/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof AuthenticatedStaffTasksIndexRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/tasks/new': {
+      id: '/_authenticated/_staff/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof AuthenticatedStaffTasksNewRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
   }
 }
 
 interface AuthenticatedStaffRouteRouteChildren {
   AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+  AuthenticatedStaffTasksNewRoute: typeof AuthenticatedStaffTasksNewRoute
+  AuthenticatedStaffTasksIndexRoute: typeof AuthenticatedStaffTasksIndexRoute
 }
 
 const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren =
   {
     AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+    AuthenticatedStaffTasksNewRoute: AuthenticatedStaffTasksNewRoute,
+    AuthenticatedStaffTasksIndexRoute: AuthenticatedStaffTasksIndexRoute,
   }
 
 const AuthenticatedStaffRouteRouteWithChildren =
