@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as AuthenticatedStaffRouteRouteImport } from './routes/_authenticated/_staff/route'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
+import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,6 +37,10 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStaffRouteRoute = AuthenticatedStaffRouteRouteImport.update({
+  id: '/_staff',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -45,6 +51,12 @@ const AuthenticatedReportRoute = AuthenticatedReportRouteImport.update({
   path: '/report',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStaffDashboardRoute =
+  AuthenticatedStaffDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
+  '/dashboard': typeof AuthenticatedStaffDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +72,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
+  '/dashboard': typeof AuthenticatedStaffDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -66,22 +80,26 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
+  '/_authenticated/_staff': typeof AuthenticatedStaffRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
+  '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/register' | '/setup' | '/home' | '/report'
+  fullPaths: '/' | '/register' | '/setup' | '/home' | '/report' | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/register' | '/setup' | '/home' | '/report'
+  to: '/' | '/register' | '/setup' | '/home' | '/report' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/register'
     | '/setup'
+    | '/_authenticated/_staff'
     | '/_authenticated/home'
     | '/_authenticated/report'
+    | '/_authenticated/_staff/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -121,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_staff': {
+      id: '/_authenticated/_staff'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedStaffRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -135,15 +160,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/_staff/dashboard': {
+      id: '/_authenticated/_staff/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedStaffDashboardRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
   }
 }
 
+interface AuthenticatedStaffRouteRouteChildren {
+  AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+}
+
+const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren =
+  {
+    AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+  }
+
+const AuthenticatedStaffRouteRouteWithChildren =
+  AuthenticatedStaffRouteRoute._addFileChildren(
+    AuthenticatedStaffRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedStaffRouteRoute: typeof AuthenticatedStaffRouteRouteWithChildren
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedReportRoute: typeof AuthenticatedReportRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedStaffRouteRoute: AuthenticatedStaffRouteRouteWithChildren,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedReportRoute: AuthenticatedReportRoute,
 }
