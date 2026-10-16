@@ -44,7 +44,7 @@ export const saveUser = createServerFn({ method: 'POST' }).middleware([requireSu
     }
     id = result.data.user.id; created = true;
   }
-  const result = await db.rpc('admin_save_user',{ _actor:context.userId,_id:id,_name:data.name,_phone:data.phone||undefined,_email:data.email||undefined,_role:data.role,_active:data.active,_hash:hash });
+  const result = await db.rpc('admin_save_user',{ _actor:context.userId,_id:id,_name:data.name,_phone:data.phone,_email:data.email,_role:data.role,_active:data.active,_hash:hash });
   if (result.error) {
     if (created) await db.auth.admin.deleteUser(id);
     return { ok: false, error: result.error.message.includes('LAST_ADMIN') ? 'לא ניתן לחסום או לשנות את תפקיד המנהל הראשי האחרון' : result.error.code === '23505' ? 'קוד זה אינו זמין' : 'השמירה נכשלה' };

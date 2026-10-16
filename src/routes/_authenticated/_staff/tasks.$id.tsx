@@ -209,7 +209,8 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
     if (!body.trim() || sending) return;
     setSending(true);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim().slice(0, 5000), user_id: u.user!.id });
+    if (!u.user) { setSending(false); return; }
+    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim().slice(0, 5000), user_id: u.user.id });
     setSending(false);
     if (error) { toast.error("ההערה לא נשמרה"); return; }
     setBody("");
@@ -260,7 +261,7 @@ function Subtasks({ taskId }: { taskId: string }) {
 }
 function SubtaskRow({ task }: { task: Task }) {
   const qc = useQueryClient();
-  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
+  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data?.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
 }
 
 function Files({ taskId }: { taskId: string }) {
