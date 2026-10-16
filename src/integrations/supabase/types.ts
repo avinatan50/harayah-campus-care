@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: number
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: never
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: never
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       admin_seeds: {
         Row: {
           claimed_at: string | null
@@ -77,11 +104,80 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          approval: boolean
+          assignment: boolean
+          changes: boolean
+          due: boolean
+          safety: boolean
+          user_id: string
+        }
+        Insert: {
+          approval?: boolean
+          assignment?: boolean
+          changes?: boolean
+          due?: boolean
+          safety?: boolean
+          user_id?: string
+        }
+        Update: {
+          approval?: boolean
+          assignment?: boolean
+          changes?: boolean
+          due?: boolean
+          safety?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          dedup_key: string
+          id: string
+          kind: string
+          read_at: string | null
+          task_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dedup_key: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          task_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dedup_key?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          task_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
           code_hash: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           phone: string | null
@@ -90,6 +186,7 @@ export type Database = {
           active?: boolean
           code_hash?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id: string
           phone?: string | null
@@ -98,6 +195,7 @@ export type Database = {
           active?: boolean
           code_hash?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string | null
@@ -139,6 +237,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_decisions: {
+        Row: {
+          approved_amount: number | null
+          body: string
+          created_at: string
+          id: string
+          next_status: Database["public"]["Enums"]["task_status"]
+          outcome: string
+          request_key: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          approved_amount?: number | null
+          body: string
+          created_at?: string
+          id?: string
+          next_status: Database["public"]["Enums"]["task_status"]
+          outcome: string
+          request_key: string
+          task_id: string
+          user_id?: string
+        }
+        Update: {
+          approved_amount?: number | null
+          body?: string
+          created_at?: string
+          id?: string
+          next_status?: Database["public"]["Enums"]["task_status"]
+          outcome?: string
+          request_key?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_decisions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -244,6 +386,7 @@ export type Database = {
           archived: boolean
           assignee_id: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           created_by: string | null
           delay_impact: string | null
@@ -251,6 +394,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           equipment_disabled: boolean
+          explicit_status: boolean
           external_party: string | null
           id: string
           is_safety: boolean
@@ -259,7 +403,12 @@ export type Database = {
           number: number
           parent_id: string | null
           related_task_id: string | null
+          repair_notes: string | null
+          request_key: string | null
           requested_amount: number | null
+          safety_check: string | null
+          safety_checked_at: string | null
+          safety_checked_by: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           type: Database["public"]["Enums"]["task_type"]
@@ -272,6 +421,7 @@ export type Database = {
           archived?: boolean
           assignee_id?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           delay_impact?: string | null
@@ -279,6 +429,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           equipment_disabled?: boolean
+          explicit_status?: boolean
           external_party?: string | null
           id?: string
           is_safety?: boolean
@@ -287,7 +438,12 @@ export type Database = {
           number?: never
           parent_id?: string | null
           related_task_id?: string | null
+          repair_notes?: string | null
+          request_key?: string | null
           requested_amount?: number | null
+          safety_check?: string | null
+          safety_checked_at?: string | null
+          safety_checked_by?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           type?: Database["public"]["Enums"]["task_type"]
@@ -300,6 +456,7 @@ export type Database = {
           archived?: boolean
           assignee_id?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           delay_impact?: string | null
@@ -307,6 +464,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           equipment_disabled?: boolean
+          explicit_status?: boolean
           external_party?: string | null
           id?: string
           is_safety?: boolean
@@ -315,7 +473,12 @@ export type Database = {
           number?: never
           parent_id?: string | null
           related_task_id?: string | null
+          repair_notes?: string | null
+          request_key?: string | null
           requested_amount?: number | null
+          safety_check?: string | null
+          safety_checked_at?: string | null
+          safety_checked_by?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           type?: Database["public"]["Enums"]["task_type"]
@@ -328,6 +491,13 @@ export type Database = {
           {
             foreignKeyName: "tasks_assignee_id_fkey"
             columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -351,6 +521,13 @@ export type Database = {
             columns: ["related_task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_safety_checked_by_fkey"
+            columns: ["safety_checked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -385,6 +562,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_save_user: {
+        Args: {
+          _active: boolean
+          _actor: string
+          _email: string
+          _hash?: string
+          _id: string
+          _name: string
+          _phone: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -397,8 +587,28 @@ export type Database = {
         Args: { s: Database["public"]["Enums"]["task_status"] }
         Returns: boolean
       }
+      record_decision: {
+        Args: {
+          _amount: number
+          _body: string
+          _expected: string
+          _key: string
+          _next: Database["public"]["Enums"]["task_status"]
+          _outcome: string
+          _task: string
+        }
+        Returns: string
+      }
+      refresh_due_notifications: { Args: never; Returns: undefined }
       submit_report: {
         Args: { _description: string; _title: string }
+        Returns: {
+          id: string
+          number: number
+        }[]
+      }
+      submit_report_once: {
+        Args: { _description: string; _key: string; _title: string }
         Returns: {
           id: string
           number: number

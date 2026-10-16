@@ -16,7 +16,11 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthenticatedStaffRouteRouteImport } from './routes/_authenticated/_staff/route'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
+import { Route as AuthenticatedStaffApprovalsRouteImport } from './routes/_authenticated/_staff/approvals'
 import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
+import { Route as AuthenticatedStaffNotificationsRouteImport } from './routes/_authenticated/_staff/notifications'
+import { Route as AuthenticatedStaffReportsRouteImport } from './routes/_authenticated/_staff/reports'
+import { Route as AuthenticatedStaffUsersRouteImport } from './routes/_authenticated/_staff/users'
 import { Route as AuthenticatedStaffTasksIndexRouteImport } from './routes/_authenticated/_staff/tasks.index'
 import { Route as AuthenticatedStaffTasksIdRouteImport } from './routes/_authenticated/_staff/tasks.$id'
 import { Route as AuthenticatedStaffTasksNewRouteImport } from './routes/_authenticated/_staff/tasks.new'
@@ -54,12 +58,35 @@ const AuthenticatedReportRoute = AuthenticatedReportRouteImport.update({
   path: '/report',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStaffApprovalsRoute =
+  AuthenticatedStaffApprovalsRouteImport.update({
+    id: '/approvals',
+    path: '/approvals',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 const AuthenticatedStaffDashboardRoute =
   AuthenticatedStaffDashboardRouteImport.update({
     id: '/dashboard',
     path: '/dashboard',
     getParentRoute: () => AuthenticatedStaffRouteRoute,
   } as any)
+const AuthenticatedStaffNotificationsRoute =
+  AuthenticatedStaffNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffReportsRoute =
+  AuthenticatedStaffReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
+const AuthenticatedStaffUsersRoute = AuthenticatedStaffUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedStaffRouteRoute,
+} as any)
 const AuthenticatedStaffTasksIndexRoute =
   AuthenticatedStaffTasksIndexRouteImport.update({
     id: '/tasks/',
@@ -85,7 +112,11 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
+  '/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/notifications': typeof AuthenticatedStaffNotificationsRoute
+  '/reports': typeof AuthenticatedStaffReportsRoute
+  '/users': typeof AuthenticatedStaffUsersRoute
   '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks/': typeof AuthenticatedStaffTasksIndexRoute
@@ -96,7 +127,11 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/report': typeof AuthenticatedReportRoute
+  '/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/notifications': typeof AuthenticatedStaffNotificationsRoute
+  '/reports': typeof AuthenticatedStaffReportsRoute
+  '/users': typeof AuthenticatedStaffUsersRoute
   '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks': typeof AuthenticatedStaffTasksIndexRoute
@@ -110,7 +145,11 @@ export interface FileRoutesById {
   '/_authenticated/_staff': typeof AuthenticatedStaffRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
+  '/_authenticated/_staff/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/_authenticated/_staff/notifications': typeof AuthenticatedStaffNotificationsRoute
+  '/_authenticated/_staff/reports': typeof AuthenticatedStaffReportsRoute
+  '/_authenticated/_staff/users': typeof AuthenticatedStaffUsersRoute
   '/_authenticated/_staff/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/_authenticated/_staff/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/_authenticated/_staff/tasks/': typeof AuthenticatedStaffTasksIndexRoute
@@ -123,7 +162,11 @@ export interface FileRouteTypes {
     | '/setup'
     | '/home'
     | '/report'
+    | '/approvals'
     | '/dashboard'
+    | '/notifications'
+    | '/reports'
+    | '/users'
     | '/tasks/$id'
     | '/tasks/new'
     | '/tasks/'
@@ -134,7 +177,11 @@ export interface FileRouteTypes {
     | '/setup'
     | '/home'
     | '/report'
+    | '/approvals'
     | '/dashboard'
+    | '/notifications'
+    | '/reports'
+    | '/users'
     | '/tasks/$id'
     | '/tasks/new'
     | '/tasks'
@@ -147,7 +194,11 @@ export interface FileRouteTypes {
     | '/_authenticated/_staff'
     | '/_authenticated/home'
     | '/_authenticated/report'
+    | '/_authenticated/_staff/approvals'
     | '/_authenticated/_staff/dashboard'
+    | '/_authenticated/_staff/notifications'
+    | '/_authenticated/_staff/reports'
+    | '/_authenticated/_staff/users'
     | '/_authenticated/_staff/tasks/$id'
     | '/_authenticated/_staff/tasks/new'
     | '/_authenticated/_staff/tasks/'
@@ -211,11 +262,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/_staff/approvals': {
+      id: '/_authenticated/_staff/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AuthenticatedStaffApprovalsRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
     '/_authenticated/_staff/dashboard': {
       id: '/_authenticated/_staff/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedStaffDashboardRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/notifications': {
+      id: '/_authenticated/_staff/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedStaffNotificationsRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/reports': {
+      id: '/_authenticated/_staff/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedStaffReportsRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/_authenticated/_staff/users': {
+      id: '/_authenticated/_staff/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedStaffUsersRouteImport
       parentRoute: typeof AuthenticatedStaffRouteRoute
     }
     '/_authenticated/_staff/tasks/': {
@@ -243,7 +322,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedStaffRouteRouteChildren {
+  AuthenticatedStaffApprovalsRoute: typeof AuthenticatedStaffApprovalsRoute
   AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+  AuthenticatedStaffNotificationsRoute: typeof AuthenticatedStaffNotificationsRoute
+  AuthenticatedStaffReportsRoute: typeof AuthenticatedStaffReportsRoute
+  AuthenticatedStaffUsersRoute: typeof AuthenticatedStaffUsersRoute
   AuthenticatedStaffTasksIdRoute: typeof AuthenticatedStaffTasksIdRoute
   AuthenticatedStaffTasksNewRoute: typeof AuthenticatedStaffTasksNewRoute
   AuthenticatedStaffTasksIndexRoute: typeof AuthenticatedStaffTasksIndexRoute
@@ -251,7 +334,11 @@ interface AuthenticatedStaffRouteRouteChildren {
 
 const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren =
   {
+    AuthenticatedStaffApprovalsRoute: AuthenticatedStaffApprovalsRoute,
     AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+    AuthenticatedStaffNotificationsRoute: AuthenticatedStaffNotificationsRoute,
+    AuthenticatedStaffReportsRoute: AuthenticatedStaffReportsRoute,
+    AuthenticatedStaffUsersRoute: AuthenticatedStaffUsersRoute,
     AuthenticatedStaffTasksIdRoute: AuthenticatedStaffTasksIdRoute,
     AuthenticatedStaffTasksNewRoute: AuthenticatedStaffTasksNewRoute,
     AuthenticatedStaffTasksIndexRoute: AuthenticatedStaffTasksIndexRoute,

@@ -15,6 +15,13 @@
       "when": 1792067549850,
       "tag": "0001_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792140811502,
+      "tag": "0002_management_workflows",
+      "breakpoints": true
     }
   ]
 }

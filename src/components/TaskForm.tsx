@@ -16,6 +16,7 @@ export type TaskFormValues = {
   title: string; description: string; type: TaskType; status: TaskStatus | ""; urgency: TaskUrgency;
   assignee_id: string; due_date: string; location: string; is_safety: boolean; equipment_disabled: boolean;
   next_step: string; external_party: string; delay_reason: string; delay_impact: string; requested_amount: string;
+  repair_notes: string; safety_check: string; related_task_id: string;
 };
 
 export function toFormValues(t?: Task): TaskFormValues {
@@ -26,6 +27,7 @@ export function toFormValues(t?: Task): TaskFormValues {
     equipment_disabled: t?.equipment_disabled ?? false, next_step: t?.next_step ?? "",
     external_party: t?.external_party ?? "", delay_reason: t?.delay_reason ?? "",
     delay_impact: t?.delay_impact ?? "", requested_amount: t?.requested_amount?.toString() ?? "",
+    repair_notes:t?.repair_notes??'',safety_check:t?.safety_check??'',related_task_id:t?.related_task_id??'',
   };
 }
 
@@ -37,6 +39,8 @@ export function toPayload(v: TaskFormValues) {
     is_safety: v.is_safety, equipment_disabled: v.is_safety ? v.equipment_disabled : false,
     next_step: n(v.next_step), external_party: n(v.external_party), delay_reason: n(v.delay_reason),
     delay_impact: n(v.delay_impact), requested_amount: v.requested_amount ? Number(v.requested_amount) : null,
+    repair_notes:n(v.repair_notes),safety_check:n(v.safety_check),related_task_id:v.related_task_id||null,
+    ...(v.status?{explicit_status:true}:{}),
     ...(v.status ? { status: v.status as TaskStatus } : {}),
   };
 }
@@ -53,6 +57,7 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
   const [error, setError] = useState<string | null>(null);
   const profiles = useQuery(profilesQuery);
   const locations = useQuery(locationsQuery);
+  const past=useQuery({queryKey:['tasks','completed-options'],queryFn:async()=>{const {supabase}=await import('@/integrations/supabase/client');const r=await supabase.from('tasks').select('id,number,title').not('completed_at','is',null).order('completed_at',{ascending:false}).limit(500);if(r.error)throw r.error;return r.data;}});
   const upd = <K extends keyof TaskFormValues>(k: K, val: TaskFormValues[K]) => setV((p) => ({ ...p, [k]: val }));
 
   const defaultStatusHint =
@@ -62,6 +67,8 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
     e.preventDefault();
     if (!v.title.trim()) return setError("יש להזין כותרת");
     if (v.requested_amount && isNaN(Number(v.requested_amount))) return setError("סכום לא תקין");
+    if(v.requested_amount&&Number(v.requested_amount)<0)return setError('הסכום חייב להיות אפס או יותר');
+    if(initial.equipment_disabled&&(!v.equipment_disabled||!v.is_safety)&&(!v.repair_notes.trim()||!v.safety_check.trim()||v.safety_check===initial.safety_check))return setError('לפני החזרת הציוד לשימוש נדרשים תיעוד תיקון ובדיקת תקינות חדשה');
     setError(null);
     onSubmit(v, files);
   }
@@ -114,12 +121,14 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
           </span>
         )}
       </label>
+      {(v.is_safety||initial.equipment_disabled)&&<div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="repair">תיעוד תיקון</Label><Textarea id="repair" maxLength={5000} value={v.repair_notes} onChange={e=>upd('repair_notes',e.target.value)}/></div><div><Label htmlFor="safety-check">בדיקת תקינות לפני החזרה לשימוש</Label><Textarea id="safety-check" maxLength={5000} value={v.safety_check} onChange={e=>upd('safety_check',e.target.value)}/></div></div>}
 
       <Collapsible open={advanced} onOpenChange={setAdvanced}>
         <CollapsibleTrigger className="flex items-center gap-1 text-sm font-semibold text-primary">
           פרטים מתקדמים <ChevronDown className={`size-4 transition ${advanced ? "rotate-180" : ""}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5 md:col-span-2"><Label htmlFor="related-task">תקלה לאחר ביצוע — משימה מקורית</Label><select id="related-task" className={selectCls} value={v.related_task_id} onChange={e=>{upd('related_task_id',e.target.value);if(mode==='create'&&e.target.value){upd('type','fault');upd('status','recurring_fault');}}}><option value="">ללא קישור</option>{past.data?.map(t=><option key={t.id} value={t.id}>#{t.number} {t.title}</option>)}</select></div>
           <div className="space-y-1.5">
             <Label htmlFor="due">מועד יעד</Label>
             <Input id="due" type="date" value={v.due_date} onChange={(e) => upd("due_date", e.target.value)} />
