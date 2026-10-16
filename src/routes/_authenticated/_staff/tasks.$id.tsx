@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Archive, ArchiveRestore, FileIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,15 +14,16 @@ import { StatusBadge, TaskRow } from "@/components/TaskRow";
 import { FilePicker } from "@/components/FilePicker";
 import {
   FIELD_LABELS, isOverdue, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
-  uploadTaskFiles, type TaskStatus,
+  uploadTaskFiles, formatDate, type TaskStatus, type Task,
 } from "@/lib/tasks";
+import { pageHead } from "@/lib/metadata";
 
 export const Route = createFileRoute("/_authenticated/_staff/tasks/$id")({
-  head: () => ({ meta: [{ title: "פרטי משימה – הראי״ה" }, { name: "description", content: "פרטי משימה וציר זמן" }] }),
+  head: () => pageHead("פרטי משימה", "פרטי משימה, החלטות, ציר זמן, קבצים ותת־משימות"),
   component: TaskDetail,
 });
 
-const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" }) : "—");
+const fmt = formatDate;
 
 function TaskDetail() {
   const { id } = Route.useParams();
@@ -39,11 +41,14 @@ function TaskDetail() {
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["tasks"] });
 
+  const [conflict, setConflict] = useState(false);
   async function update(patch: Database["public"]["Tables"]["tasks"]["Update"], msg = "נשמר"): Promise<void> {
+    if (!task.data || busy) return;
     setBusy(true);
-    const { error } = await supabase.from("tasks").update(patch).eq("id", id);
+    const { data, error } = await supabase.from("tasks").update(patch).eq("id", id).eq("updated_at", task.data.updated_at).select("id");
     setBusy(false);
-    if (error) { toast.error("השמירה נכשלה"); return; }
+    if (error) { toast.error(error.message.includes("SAFETY_CHECK_REQUIRED") ? "נדרשים תיעוד תיקון ובדיקת תקינות חדשה" : "השמירה נכשלה"); return; }
+    if (!data?.length) { setConflict(true); toast.error("משתמש אחר עדכן את המשימה. טענו את הגרסה העדכנית."); return; }
     toast.success(msg);
     refresh();
   }
@@ -56,6 +61,7 @@ function TaskDetail() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
+      {conflict && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning bg-warning/20 p-3"><span>השינויים לא נשמרו כי המשימה עודכנה על ידי משתמש אחר.</span><Button size="sm" onClick={async()=>{setConflict(false);await task.refetch();}}>טעינת הגרסה העדכנית</Button></div>}
       <div className="rounded-2xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -76,14 +82,14 @@ function TaskDetail() {
             >
               {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => update({ archived: !t.archived }, t.archived ? "שוחזר מהארכיון" : "הועבר לארכיון")}>
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => { if (t.archived || confirm("להעביר את המשימה לארכיון? ניתן לשחזר אותה בכל עת.")) update({ archived: !t.archived }, t.archived ? "שוחזר מהארכיון" : "הועבר לארכיון"); }}>
               {t.archived ? <><ArchiveRestore className="size-4" /> שחזור</> : <><Archive className="size-4" /> ארכוב</>}
             </Button>
           </div>
         </div>
         {t.is_safety && (
           <div className="mt-3 flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
-            <AlertTriangle className="size-4" /> מפגע בטיחותי{t.equipment_disabled ? " · הציוד מושבת משימוש" : ""}
+            <AlertTriangle className="size-4" /> מפגע בטיחותי{t.equipment_disabled ? " · הציוד מושבת משימוש" : t.safety_checked_at ? ` · נבדק לפני החזרה: ${fmt(t.safety_checked_at)} · ${name(t.safety_checked_by)}` : ""}
           </div>
         )}
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
@@ -93,11 +99,13 @@ function TaskDetail() {
           <Info k="ממתין מאז" v={t.waiting_since ? fmt(t.waiting_since) : "—"} />
           <Info k="נפתח" v={`${fmt(t.created_at)} · ${name(t.created_by)}`} />
           <Info k="עדכון אחרון" v={`${fmt(t.updated_at)} · ${name(t.updated_by)}`} />
-          <Info k="הושלם" v={fmt(t.completed_at)} />
+          <Info k="הושלם" v={t.completed_at ? `${fmt(t.completed_at)} · ${name(t.completed_by)}` : "—"} />
           {t.next_step && <Info k="נדרש להתקדם" v={t.next_step} />}
           {t.external_party && <Info k="גורם חיצוני" v={t.external_party} />}
           {t.delay_reason && <Info k="סיבת עיכוב" v={t.delay_reason} />}
         </dl>
+        {t.parent_id && <ParentLink id={t.parent_id} />}
+        {t.related_task_id && <Original id={t.related_task_id} discovered={t.created_at} name={name} />}
       </div>
 
       <Tabs defaultValue="details">
@@ -109,9 +117,9 @@ function TaskDetail() {
           <TabsTrigger value="files">קבצים</TabsTrigger>
         </TabsList>
         <TabsContent value="details" className="rounded-2xl border bg-card p-5">
-          <TaskForm key={t.updated_at} mode="edit" initial={toFormValues(t)} busy={busy} onSubmit={(v) => update(toPayload(v))} />
+          <TaskForm key={t.updated_at} mode="edit" initial={toFormValues(t)} busy={busy} onSubmit={(v) => { const { explicit_status: _ignored, ...payload } = toPayload(v); update(payload); }} />
         </TabsContent>
-        <TabsContent value="timeline"><Timeline taskId={id} name={name} /></TabsContent>
+        <TabsContent value="timeline"><Decisions taskId={id} name={name} /><Timeline taskId={id} name={name} /></TabsContent>
         <TabsContent value="comments"><Comments taskId={id} name={name} /></TabsContent>
         <TabsContent value="subtasks"><Subtasks taskId={id} /></TabsContent>
         <TabsContent value="files"><Files taskId={id} /></TabsContent>
@@ -140,7 +148,22 @@ function display(field: string | null, val: string | null, name: (id: string | n
   return val;
 }
 
-const ACTIONS: Record<string, string> = { created: "נפתחה המשימה", status_change: "שינוי סטטוס", updated: "עדכון", archived: "הועבר לארכיון", restored: "שוחזר מהארכיון" };
+const ACTIONS: Record<string, string> = { created: "נפתחה המשימה", status_change: "שינוי סטטוס", updated: "עדכון", archived: "הועבר לארכיון", restored: "שוחזר מהארכיון", decision: "תועדה החלטה" };
+
+function ParentLink({ id }: { id: string }) {
+  const q = useQuery({ queryKey: ["tasks", "one", id, "short"], queryFn: async () => { const r = await supabase.from("tasks").select("id,number,title").eq("id", id).maybeSingle(); if (r.error) throw r.error; return r.data; } });
+  return q.data ? <p className="mt-3 text-sm">משימה ראשית: <Link className="text-primary" to="/tasks/$id" params={{ id }}>#{q.data.number} {q.data.title}</Link></p> : null;
+}
+function Original({ id, discovered, name }: { id: string; discovered: string; name: (id: string | null) => string }) {
+  const q = useQuery({ queryKey: ["tasks", "one", id], queryFn: async () => { const r = await supabase.from("tasks").select("*").eq("id", id).maybeSingle(); if (r.error) throw r.error; return r.data; } });
+  const o = q.data;
+  return o ? <div className="mt-3 rounded-lg bg-muted p-3 text-sm"><strong>תקלה לאחר ביצוע</strong><p>המשימה המקורית <Link className="text-primary" to="/tasks/$id" params={{ id }}>#{o.number} {o.title}</Link> בוצעה ב־{fmt(o.completed_at)} על ידי {name(o.completed_by)}.</p><p>התקלה הנוספת התגלתה ב־{fmt(discovered)}.</p></div> : null;
+}
+function Decisions({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
+  const q = useQuery({ queryKey: ["tasks", "decisions", taskId], queryFn: async () => { const r = await supabase.from("task_decisions").select("*").eq("task_id", taskId).order("created_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
+  if (!q.data?.length) return null;
+  return <section className="mb-4 rounded-2xl border bg-card p-5"><h2 className="mb-3 font-semibold">החלטות</h2><ul className="space-y-3 text-sm">{q.data.map(d => <li key={d.id}><strong>{({ approved: "אושר", rejected: "נדחה", instruction: "הנחיה אחרת" } as Record<string, string>)[d.outcome]}</strong> · {fmt(d.created_at)} · {name(d.user_id)}<p className="whitespace-pre-wrap">{d.body}</p>{d.approved_amount !== null && <p>סכום מאושר: ₪{d.approved_amount.toLocaleString("he-IL")}</p>}<p>סטטוס המשך: {STATUS_LABELS[d.next_status]}</p></li>)}</ul></section>;
+}
 
 function Timeline({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
   const q = useQuery({
@@ -181,10 +204,13 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
       return data;
     },
   });
+  const [sending, setSending] = useState(false);
   async function add() {
-    if (!body.trim()) return;
+    if (!body.trim() || sending) return;
+    setSending(true);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim(), user_id: u.user!.id });
+    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim().slice(0, 5000), user_id: u.user!.id });
+    setSending(false);
     if (error) { toast.error("ההערה לא נשמרה"); return; }
     setBody("");
     qc.invalidateQueries({ queryKey: ["tasks", "comments", taskId] });
@@ -197,13 +223,17 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
           <p className="mt-1 whitespace-pre-wrap">{c.body}</p>
         </div>
       ))}
-      <Textarea rows={2} value={body} onChange={(e) => setBody(e.target.value)} placeholder="הוספת הערה…" />
-      <Button size="sm" onClick={add}>הוספה</Button>
+      <Textarea rows={2} maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="הוספת הערה…" />
+      <Button size="sm" onClick={add} disabled={sending || !body.trim()}>{sending ? "שומר…" : "הוספה"}</Button>
     </div>
   );
 }
 
 function Subtasks({ taskId }: { taskId: string }) {
+  const qc = useQueryClient();
+  const profiles = useQuery(profilesQuery);
+  const [draft, setDraft] = useState({ title: "", assignee_id: "", status: "new" as TaskStatus, due_date: "", key: crypto.randomUUID() });
+  const [busy, setBusy] = useState(false);
   const q = useQuery({
     queryKey: ["tasks", "children", taskId],
     queryFn: async () => {
@@ -214,19 +244,30 @@ function Subtasks({ taskId }: { taskId: string }) {
   });
   return (
     <div className="rounded-2xl border bg-card">
-      <ul className="divide-y">{q.data?.map((t) => <TaskRow key={t.id} task={t} />)}</ul>
+      <ul className="divide-y">{q.data?.map((t) => <SubtaskRow key={t.id} task={t} />)}</ul>
       {q.data?.length === 0 && <p className="p-5 text-sm text-muted-foreground">אין תת־משימות</p>}
       <div className="border-t p-4">
-        <Button asChild size="sm" variant="outline"><Link to="/tasks/new" search={{ parent: taskId }}>+ תת־משימה</Link></Button>
+        <form className="grid gap-2 md:grid-cols-[1fr_150px_150px_150px_auto]" onSubmit={async e => { e.preventDefault(); if (!draft.title.trim() || busy) return; setBusy(true); const r = await supabase.from("tasks").insert({ title: draft.title.trim(), assignee_id: draft.assignee_id || null, status: draft.status, explicit_status: true, due_date: draft.due_date || null, parent_id: taskId, request_key: draft.key }).select("id").single(); setBusy(false); if (r.error && r.error.code !== "23505") { toast.error("תת־המשימה לא נשמרה"); return; } setDraft({ title: "", assignee_id: "", status: "new", due_date: "", key: crypto.randomUUID() }); qc.invalidateQueries({ queryKey: ["tasks"] }); toast.success("תת־המשימה נוספה"); }}>
+          <Input aria-label="כותרת תת־משימה" placeholder="כותרת תת־משימה" maxLength={200} value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} />
+          <select aria-label="אחראי לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.assignee_id} onChange={e => setDraft({ ...draft, assignee_id: e.target.value })}><option value="">ללא אחראי</option>{profiles.data?.filter(p => p.active).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select>
+          <select aria-label="סטטוס לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as TaskStatus })}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <Input aria-label="מועד יעד לתת־משימה" type="date" value={draft.due_date} onChange={e => setDraft({ ...draft, due_date: e.target.value })} />
+          <Button disabled={busy || !draft.title.trim()}>{busy ? "שומר…" : "+ תת־משימה"}</Button>
+        </form>
       </div>
     </div>
   );
+}
+function SubtaskRow({ task }: { task: Task }) {
+  const qc = useQueryClient();
+  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
 }
 
 function Files({ taskId }: { taskId: string }) {
   const qc = useQueryClient();
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("");
   const q = useQuery({
     queryKey: ["tasks", "files", taskId],
     queryFn: async () => {
@@ -255,11 +296,11 @@ function Files({ taskId }: { taskId: string }) {
       {files.length > 0 && (
         <Button size="sm" disabled={busy} onClick={async () => {
           setBusy(true);
-          try { await uploadTaskFiles(taskId, files); setFiles([]); toast.success("הקבצים הועלו"); }
-          catch { toast.error("ההעלאה נכשלה"); }
-          setBusy(false);
+          try { await uploadTaskFiles(taskId, files, (d, n) => setProgress(`${d}/${n}`)); setFiles([]); toast.success("הקבצים הועלו"); }
+          catch { toast.error("ההעלאה נכשלה. קבצים שלא הועלו נשארו ברשימה."); }
+          setBusy(false); setProgress("");
           qc.invalidateQueries({ queryKey: ["tasks", "files", taskId] });
-        }}>העלאה</Button>
+        }}>{busy ? `מעלה ${progress}` : "העלאה"}</Button>
       )}
     </div>
   );
