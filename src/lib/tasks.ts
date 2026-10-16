@@ -35,10 +35,13 @@ export const FIELD_LABELS: Record<string, string> = {
   equipment_disabled: "מושבת משימוש", next_step: "מה נדרש להתקדם", external_party: "גורם חיצוני",
   delay_reason: "סיבת עיכוב", delay_impact: "השלכות העיכוב", requested_amount: "סכום מבוקש",
   parent_id: "משימת אב", related_task_id: "משימה קשורה", archived: "ארכיון",
+  repair_notes: "תיעוד תיקון", safety_check: "בדיקת תקינות", safety_checked_at: "מועד בדיקת תקינות", safety_checked_by: "בודק תקינות", completed_by: "סגר את המשימה", completed_at: "מועד השלמה", waiting_since: "תחילת המתנה",
 };
 
 export const CLOSED_STATUSES: TaskStatus[] = ["closed", "cancelled"];
-export const todayISO = () => new Date().toISOString().slice(0, 10);
+export const todayISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year:'numeric',month:'2-digit',day:'2-digit' }).format(new Date());
+export const formatDate = (d: string | null) => d ? new Date(d).toLocaleString('he-IL', {timeZone:'Asia/Jerusalem',dateStyle:'short',timeStyle:'short'}) : '—';
+export const waitingDays = (d: string | null) => d ? Math.max(0,Math.floor((Date.now()-new Date(d).getTime())/86400000)) : 0;
 
 /** Single source of truth for dashboard counters and list filters. */
 export type Preset =
@@ -113,8 +116,10 @@ export const locationsQuery = queryOptions({
 export const isOverdue = (t: Pick<Task, "due_date" | "status" | "archived">) =>
   !!t.due_date && !t.archived && !CLOSED_STATUSES.includes(t.status) && t.due_date < todayISO();
 
-export async function uploadTaskFiles(taskId: string, files: File[]) {
+export async function uploadTaskFiles(taskId: string, files: File[], progress?: (done:number,total:number)=>void) {
+  let done=0;
   for (const f of files) {
+    if(f.size>50*1024*1024) throw new Error('הקובץ גדול מדי');
     const path = `${taskId}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\-]/g, "_")}`;
     const up = await supabase.storage.from("task-files").upload(path, f, { contentType: f.type });
     if (up.error) throw up.error;
@@ -122,5 +127,6 @@ export async function uploadTaskFiles(taskId: string, files: File[]) {
       task_id: taskId, path, file_name: f.name, mime_type: f.type, size: f.size,
     });
     if (ins.error) throw ins.error;
+    progress?.(++done,files.length);
   }
 }

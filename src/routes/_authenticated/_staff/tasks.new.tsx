@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/_staff/tasks/new")({
 function NewTask() {
   const { parent } = Route.useSearch();
   const [busy, setBusy] = useState(false);
+  const [requestKey] = useState(() => crypto.randomUUID());
   const navigate = useNavigate();
   const qc = useQueryClient();
   return (
@@ -27,10 +28,12 @@ function NewTask() {
           initial={toFormValues()}
           busy={busy}
           onSubmit={async (v, files) => {
+            if (busy) return;
             setBusy(true);
-            const { data, error } = await supabase.from("tasks").insert({ ...toPayload(v), parent_id: parent ?? null }).select("id, number").single();
-            if (error || !data) { setBusy(false); toast.error("השמירה נכשלה"); return; }
-            try { await uploadTaskFiles(data.id, files); } catch { toast.error("חלק מהקבצים לא הועלו"); }
+            let { data, error } = await supabase.from("tasks").insert({ ...toPayload(v), parent_id: parent ?? null, request_key: requestKey }).select("id, number").single();
+            if (error?.code === "23505") ({ data, error } = await supabase.from("tasks").select("id, number").eq("request_key", requestKey).single());
+            if (error || !data) { setBusy(false); toast.error("השמירה נכשלה; הטופס נשמר וניתן לנסות שוב"); return; }
+            try { await uploadTaskFiles(data.id, files); } catch { toast.error("המשימה נשמרה, אך חלק מהקבצים לא הועלו"); }
             qc.invalidateQueries({ queryKey: ["tasks"] });
             toast.success(`משימה #${data.number} נוצרה`);
             navigate({ to: "/tasks/$id", params: { id: data.id } });

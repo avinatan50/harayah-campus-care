@@ -26,6 +26,8 @@ function ReportPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ number: number; fileError?: boolean } | null>(null);
+  const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
+  const [progress, setProgress] = useState("");
 
   async function signOut() {
     await qc.cancelQueries(); qc.clear();
@@ -36,15 +38,17 @@ function ReportPage() {
   async function submit(e: import("react").FormEvent) {
     e.preventDefault();
     if (!title.trim()) return setError("יש להזין כותרת");
+    if (busy) return;
     setBusy(true); setError(null);
-    const { data, error } = await supabase.rpc("submit_report", { _title: title, _description: description });
+    const { data, error } = await supabase.rpc("submit_report_once", { _title: title, _description: description, _key: requestKey });
     const row = data?.[0];
     if (error || !row) { setBusy(false); return setError("שליחת הקריאה נכשלה, נסו שוב"); }
     let fileError = false;
-    try { await uploadTaskFiles(row.id, files); } catch { fileError = true; }
+    try { await uploadTaskFiles(row.id, files, (d, n) => setProgress(`${d}/${n}`)); } catch { fileError = true; }
     setBusy(false);
     setResult({ number: row.number, fileError });
-    setTitle(""); setDescription(""); setFiles([]);
+    if (!fileError) { setTitle(""); setDescription(""); setFiles([]); setRequestKey(crypto.randomUUID()); }
+    setProgress("");
   }
 
   return (
@@ -68,7 +72,7 @@ function ReportPage() {
             <h1 className="mt-4 text-xl font-bold">הקריאה התקבלה</h1>
             <p className="mt-2 text-muted-foreground">מספר הקריאה שלך:</p>
             <p className="mt-1 font-display text-4xl font-bold text-primary">#{result.number}</p>
-            {result.fileError && <p className="mt-3 text-sm text-destructive">חלק מהקבצים לא הועלו.</p>}
+            {result.fileError && <p className="mt-3 text-sm text-destructive">הקריאה נקלטה, אך חלק מהקבצים לא הועלו. אפשר לפנות לצוות עם מספר הקריאה.</p>}
             <Button className="mt-6" onClick={() => setResult(null)}>פתיחת קריאה נוספת</Button>
           </div>
         ) : (
@@ -84,7 +88,7 @@ function ReportPage() {
             </div>
             <FilePicker files={files} onChange={setFiles} />
             {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "שולח…" : "שליחת קריאה"}</Button>
+            <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? progress ? `מעלה קבצים ${progress}` : "שולח…" : "שליחת קריאה"}</Button>
           </form>
         )}
       </main>

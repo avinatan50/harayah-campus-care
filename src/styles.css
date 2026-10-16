@@ -90,3 +90,15 @@
   }
   h1, h2, h3 { font-family: var(--font-display); }
 }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: var(--card); color: var(--foreground); }
+  main { padding: 0 !important; }
+  .report-page { max-width: none; font-size: 11pt; }
+  table { table-layout: fixed; }
+  th, td { overflow-wrap: anywhere; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+  @page { size: A4 landscape; margin: 12mm; }
+}
