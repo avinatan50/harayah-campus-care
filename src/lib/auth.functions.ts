@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { EASY_CODE_MESSAGE, TAKEN_CODE_MESSAGE, isEasyCode } from "@/lib/access-code";
 
 const codeSchema = z.string().regex(/^\d{4}$/, "יש להזין 4 ספרות");
 
@@ -50,7 +51,8 @@ const LIMITS: Record<string, { perIp: number; global: number; minutes: number }>
 
 async function isRateLimited(kind: string, ip: string): Promise<boolean> {
   const db = await admin();
-  const lim = LIMITS[kind]!;
+  const lim = LIMITS[kind];
+  if (!lim) return true;
   const since = new Date(Date.now() - lim.minutes * 60_000).toISOString();
   const [perIp, global] = await Promise.all([
     db.from("login_attempts").select("id", { count: "exact", head: true })
@@ -126,12 +128,13 @@ export const registerUser = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<Result<SessionTokens>> => {
     const ip = clientIp();
     if (await isRateLimited("signup", ip)) return { ok: false, error: RATE_MSG, code: "RATE" };
+    if (isEasyCode(data.code)) return { ok: false, error: EASY_CODE_MESSAGE, code: "EASY_CODE" };
     const db = await admin();
     const hash = await hashCode(data.code);
     const taken = await db.from("profiles").select("id", { count: "exact", head: true }).eq("code_hash", hash);
     if ((taken.count ?? 0) > 0) {
       await recordAttempt("signup", ip, false);
-      return { ok: false, code: "CODE_TAKEN", error: "קוד זה אינו זמין. יש לפנות למנהל הראשי להסדרת קוד חלופי." };
+      return { ok: false, code: "CODE_TAKEN", error: TAKEN_CODE_MESSAGE };
     }
     const email = `u-${crypto.randomUUID()}@users.haraaya.local`;
     const { data: created, error } = await db.auth.admin.createUser({
@@ -145,7 +148,7 @@ export const registerUser = createServerFn({ method: "POST" })
     if (pErr) {
       await db.auth.admin.deleteUser(id);
       await recordAttempt("signup", ip, false);
-      return { ok: false, code: "CODE_TAKEN", error: "קוד זה אינו זמין. יש לפנות למנהל הראשי להסדרת קוד חלופי." };
+      return { ok: false, code: "CODE_TAKEN", error: TAKEN_CODE_MESSAGE };
     }
     await db.from("user_roles").insert({ user_id: id, role: "user" });
     await recordAttempt("signup", ip, true);
@@ -176,13 +179,14 @@ export const setupAdminAccount = createServerFn({ method: "POST" })
       await recordAttempt("setup", ip, false);
       return { ok: false, error: "מפתח הגדרה שגוי" };
     }
+    if (isEasyCode(data.code)) return { ok: false, error: EASY_CODE_MESSAGE, code: "EASY_CODE" };
     const db = await admin();
     const { data: seed } = await db.from("admin_seeds").select("*").eq("email", data.email).maybeSingle();
     if (!seed) return { ok: false, error: "כתובת זו אינה ברשימת חשבונות הניהול" };
     if (seed.claimed_at) return { ok: false, error: "חשבון זה כבר הוגדר. לשינוי קוד פנו למנהל הראשי." };
     const hash = await hashCode(data.code);
     const taken = await db.from("profiles").select("id", { count: "exact", head: true }).eq("code_hash", hash);
-    if ((taken.count ?? 0) > 0) return { ok: false, code: "CODE_TAKEN", error: "קוד זה תפוס, בחרו קוד אחר" };
+    if ((taken.count ?? 0) > 0) return { ok: false, code: "CODE_TAKEN", error: TAKEN_CODE_MESSAGE };
 
     // find or create auth user with the real email
     let userId: string | undefined;

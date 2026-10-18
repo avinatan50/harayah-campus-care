@@ -13,6 +13,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "כניסה באמצעות קוד אישי בן 4 ספרות למערכת ניהול המשימות של תלמוד תורה הראי״ה" },
       { property: "og:title", content: "כניסה – הראי״ה ניהול משימות ותקלות" },
       { property: "og:description", content: "כניסה באמצעות קוד אישי בן 4 ספרות" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LoginPage,
@@ -54,7 +56,7 @@ function LoginPage() {
           {busy ? "מתחבר…" : "כניסה"}
         </Button>
       </form>
-      <div className="mt-6 border-t pt-4 text-center text-sm">
+      <div className="mt-6 border-t pt-4 text-right text-sm">
         משתמש חדש?{" "}
         <Link to="/register" className="font-semibold text-primary underline-offset-4 hover:underline">הרשמה</Link>
       </div>

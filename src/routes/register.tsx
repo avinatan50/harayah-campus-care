@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AuthCard, CodeInput } from "@/components/CodeInput";
 import { registerUser } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { EASY_CODE_MESSAGE, isEasyCode } from "@/lib/access-code";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -15,6 +16,8 @@ export const Route = createFileRoute("/register")({
       { name: "description", content: "הרשמת משתמש חדש למערכת הדיווח של תלמוד תורה הראי״ה" },
       { property: "og:title", content: "הרשמה – הראי״ה" },
       { property: "og:description", content: "הרשמת משתמש חדש למערכת הדיווח" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: RegisterPage,
@@ -36,6 +39,7 @@ function RegisterPage() {
     if (fullName.trim().length < 2) return setError("יש להזין שם מלא");
     if (!/^[0-9+\-\s]{9,15}$/.test(phone.trim())) return setError("יש להזין מספר טלפון תקין");
     if (!/^\d{4}$/.test(code)) return setError("יש להזין 4 ספרות");
+    if (isEasyCode(code)) return setError(EASY_CODE_MESSAGE);
     setBusy(true);
     try {
       const res = await register({ data: { fullName, phone, code } });
@@ -70,14 +74,13 @@ function RegisterPage() {
           <Input id="phone" dir="ltr" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={15} autoComplete="tel" className="text-right" />
         </div>
         <div className="space-y-1.5">
-          <Label>4 הספרות האחרונות של תעודת הזהות</Label>
+          <Label>קוד אימות: (4 ספרות אחרונות של ת.ז. שלכם)</Label>
           <CodeInput value={code} onChange={setCode} />
-          <p className="text-xs text-muted-foreground">ספרות אלו ישמשו כקוד הכניסה שלכם.</p>
         </div>
         {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
         <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "נרשם…" : "הרשמה"}</Button>
       </form>
-      <div className="mt-6 border-t pt-4 text-center text-sm">
+      <div className="mt-6 border-t pt-4 text-right text-sm">
         כבר רשומים? <Link to="/" className="font-semibold text-primary hover:underline">כניסה</Link>
       </div>
     </AuthCard>

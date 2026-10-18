@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { z } from 'zod';
+import { EASY_CODE_MESSAGE, TAKEN_CODE_MESSAGE, isEasyCode } from '@/lib/access-code';
 
 export const listUsers = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data: allowed } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'super_admin' });
@@ -20,12 +21,14 @@ export const saveUser = createServerFn({ method: 'POST' }).middleware([requireSu
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
   let hash: string | undefined;
   if (data.code) {
+    if (isEasyCode(data.code)) return { ok: false, error: EASY_CODE_MESSAGE };
     const pepper = process.env['CODE_PEPPER'];
     if (!pepper) throw new Error('שירות הקודים אינו זמין');
     const key = await crypto.subtle.importKey('raw',new TextEncoder().encode(pepper),{name:'HMAC',hash:'SHA-256'},false,['sign']);
     hash = Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(data.code)))).map(b=>b.toString(16).padStart(2,'0')).join('');
     const taken = await db.from('profiles').select('id').eq('code_hash',hash).neq('id',data.id).maybeSingle();
-    if (taken.error || taken.data) return { ok: false, error: 'קוד זה אינו זמין. בחרו קוד אחר.' };
+    if (taken.error) return { ok: false, error: 'בדיקת הקוד נכשלה, נסו שוב' };
+    if (taken.data) return { ok: false, error: TAKEN_CODE_MESSAGE };
   }
   if (data.create && !hash) return { ok: false, error: 'נדרש קוד בן 4 ספרות למשתמש חדש' };
   let created = false;
@@ -47,7 +50,7 @@ export const saveUser = createServerFn({ method: 'POST' }).middleware([requireSu
   const result = await db.rpc('admin_save_user',{ _actor:context.userId,_id:id,_name:data.name,_phone:data.phone,_email:data.email,_role:data.role,_active:data.active,...(hash?{_hash:hash}:{}) });
   if (result.error) {
     if (created) await db.auth.admin.deleteUser(id);
-    return { ok: false, error: result.error.message.includes('LAST_ADMIN') ? 'לא ניתן לחסום או לשנות את תפקיד המנהל הראשי האחרון' : result.error.code === '23505' ? 'קוד זה אינו זמין' : 'השמירה נכשלה' };
+    return { ok: false, error: result.error.message.includes('LAST_ADMIN') ? 'לא ניתן לחסום או לשנות את תפקיד המנהל הראשי האחרון' : result.error.code === '23505' ? TAKEN_CODE_MESSAGE : 'השמירה נכשלה' };
   }
   if (hash && !created) {
     const reset = await db.auth.admin.updateUserById(id,{ password: crypto.randomUUID()+crypto.randomUUID() });

@@ -84,11 +84,21 @@
 @layer base {
   * { border-color: var(--color-border); }
   body {
+    direction: rtl;
+    text-align: right;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
   h1, h2, h3 { font-family: var(--font-display); }
+}
+
+/* Hebrew alignment also applies to portaled menus and explicitly LTR numeric fields. */
+html[dir="rtl"] :is(h1, h2, h3, h4, h5, h6, label, input:not([data-input-otp]), textarea, select, option, [role="menu"], [role="menuitem"], [role="listbox"], [role="option"], [role="dialog"]) {
+  text-align: right;
+}
+html[dir="rtl"] :is(textarea, select, option, [role="menu"], [role="menuitem"], [role="listbox"], [role="option"], [role="dialog"]) {
+  direction: rtl;
 }
 
 @media print {
