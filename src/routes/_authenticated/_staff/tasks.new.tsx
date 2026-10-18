@@ -6,10 +6,11 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskForm, toFormValues, toPayload } from "@/components/TaskForm";
 import { uploadTaskFiles } from "@/lib/tasks";
+import { pageHead } from "@/lib/metadata";
 
 export const Route = createFileRoute("/_authenticated/_staff/tasks/new")({
   validateSearch: z.object({ parent: z.string().uuid().optional().catch(undefined) }),
-  head: () => ({ meta: [{ title: "משימה חדשה – הראי״ה" }, { name: "description", content: "פתיחת משימה חדשה" }] }),
+  head: () => pageHead("משימה חדשה", "פתיחת משימה חדשה"),
   component: NewTask,
 });
 

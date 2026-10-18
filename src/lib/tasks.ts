@@ -46,7 +46,7 @@ export const waitingDays = (d: string | null) => d ? Math.max(0,Math.floor((Date
 /** Single source of truth for dashboard counters and list filters. */
 export type Preset =
   | "open" | "waiting_approval" | "waiting_decision" | "waiting_external"
-  | "overdue" | "done" | "safety" | "archived" | "all";
+  | "overdue" | "done" | "safety" | "my_action" | "archived" | "all";
 
 export const PRESET_LABELS: Record<Preset, string> = {
   open: "משימות פתוחות",
@@ -56,12 +56,13 @@ export const PRESET_LABELS: Record<Preset, string> = {
   overdue: "משימות באיחור",
   done: "הושלמו",
   safety: "מפגעי בטיחות פתוחים",
+  my_action: "ממתין לפעולה שלי",
   archived: "ארכיון",
   all: "כל המשימות (ללא ארכיון)",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyPreset<Q extends { eq: any; not: any; lt: any }>(q: Q, preset: Preset): Q {
+export function applyPreset<Q extends { eq: any; not: any; lt: any }>(q: Q, preset: Preset, userId?: string): Q {
   const notClosed = `(${CLOSED_STATUSES.join(",")})`;
   switch (preset) {
     case "archived": return q.eq("archived", true);
@@ -69,6 +70,7 @@ export function applyPreset<Q extends { eq: any; not: any; lt: any }>(q: Q, pres
     case "open": return q.eq("archived", false).not("status", "in", notClosed);
     case "overdue": return q.eq("archived", false).not("status", "in", notClosed).lt("due_date", todayISO());
     case "safety": return q.eq("archived", false).not("status", "in", notClosed).eq("is_safety", true);
+    case "my_action": return q.eq("archived", false).not("status", "in", notClosed).eq("assignee_id", userId ?? "00000000-0000-0000-0000-000000000000");
     case "done": return q.eq("archived", false).eq("status", "closed");
     default: return q.eq("archived", false).eq("status", preset);
   }

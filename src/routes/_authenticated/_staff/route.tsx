@@ -63,12 +63,12 @@ function StaffLayout() {
         <Link
           key={n.label}
           to={n.to}
-          search={n.search as never}
+          search={(n.search?.preset === "safety" && me?.role === "staff" ? { preset: "my_action" } : n.search) as never}
           onClick={() => setOpen(false)}
           activeOptions={{ includeSearch: true }}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold"
         >
-          <n.icon className="size-4" /> {n.label}{n.to==='/notifications'&&!!notifications.data&&<span className="mr-auto text-xs">{notifications.data}</span>}
+          <n.icon className="size-4" /> {n.search?.preset === "safety" && me?.role === "staff" ? "ממתין לפעולה שלי" : n.label}{n.to==='/notifications'&&!!notifications.data&&<span className="mr-auto text-xs">{notifications.data}</span>}
         </Link>
       ))}
       {me?.role==='super_admin'&&<Link to="/users" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"><Users className="size-4"/>ניהול משתמשים</Link>}

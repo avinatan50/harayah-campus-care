@@ -10,9 +10,10 @@ import { FilePicker } from "@/components/FilePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, uploadTaskFiles } from "@/lib/tasks";
 import { useNavigate } from "@tanstack/react-router";
+import { pageHead } from "@/lib/metadata";
 
 export const Route = createFileRoute("/_authenticated/report")({
-  head: () => ({ meta: [{ title: "פתיחת קריאה – הראי״ה" }, { name: "description", content: "פתיחת קריאה מהירה" }] }),
+  head: () => pageHead("פתיחת קריאה", "פתיחת קריאה מהירה"),
   component: ReportPage,
 });
 
