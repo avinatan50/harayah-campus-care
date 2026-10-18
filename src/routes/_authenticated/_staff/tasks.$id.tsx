@@ -70,6 +70,7 @@ function TaskDetail() {
               {t.archived && <span className="rounded-full bg-muted px-2 text-xs">בארכיון</span>}
             </div>
             <h1 className="mt-1 text-2xl font-bold">{t.title}</h1>
+            {t.description && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">{t.description}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={t.status} />

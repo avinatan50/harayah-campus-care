@@ -29,7 +29,7 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-right">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-2xl font-bold text-primary-foreground">ה</div>
           <h1 className="text-2xl font-bold">הראי״ה</h1>
           <p className="text-sm text-muted-foreground">ניהול משימות ותקלות</p>

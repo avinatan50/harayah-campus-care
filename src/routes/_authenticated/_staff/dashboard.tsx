@@ -2,21 +2,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { applyPreset, PRESET_LABELS, type Preset } from "@/lib/tasks";
+import { applyPreset, meQuery, PRESET_LABELS, type Preset } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
+import { pageHead } from "@/lib/metadata";
 
 export const Route = createFileRoute("/_authenticated/_staff/dashboard")({
-  head: () => ({ meta: [{ title: "לוח בקרה – הראי״ה" }, { name: "description", content: "לוח בקרה למשימות ותקלות" }] }),
+  head: () => pageHead("לוח בקרה", "לוח בקרה למשימות ותקלות"),
   component: Dashboard,
 });
 
 const CARDS: Preset[] = ["open", "waiting_approval", "waiting_decision", "waiting_external", "overdue", "done"];
 
-function useCount(preset: Preset) {
+function useCount(preset: Preset, userId?: string) {
   return useQuery({
-    queryKey: ["tasks", "count", preset],
+    queryKey: ["tasks", "count", preset, userId],
     queryFn: async () => {
-      const { count, error } = await applyPreset(supabase.from("tasks").select("id", { count: "exact", head: true }), preset);
+      const { count, error } = await applyPreset(supabase.from("tasks").select("id", { count: "exact", head: true }), preset, userId);
       if (error) throw error;
       return count ?? 0;
     },
@@ -24,7 +25,9 @@ function useCount(preset: Preset) {
 }
 
 function Dashboard() {
-  const safety = useCount("safety");
+  const { data: me } = useQuery(meQuery);
+  const attentionPreset = me?.role === "staff" ? "my_action" : "safety";
+  const safety = useCount(attentionPreset, me?.id);
   const recent = useQuery({
     queryKey: ["tasks", "recent"],
     queryFn: async () => {
@@ -39,13 +42,11 @@ function Dashboard() {
       <h1 className="text-2xl font-bold">לוח בקרה</h1>
       <Link
         to="/tasks"
-        search={{ preset: "safety" }}
-        className={`flex items-center gap-3 rounded-xl px-4 py-2.5 font-semibold ${
-          (safety.data ?? 0) > 0 ? "bg-destructive text-destructive-foreground" : "bg-success/15 text-success"
-        }`}
+        search={{ preset: attentionPreset }}
+        className="flex items-center gap-3 rounded-xl bg-destructive px-4 py-2.5 font-semibold text-destructive-foreground"
       >
         <AlertTriangle className="size-5" />
-        <span>מפגעי בטיחות פתוחים:</span>
+        <span>{PRESET_LABELS[attentionPreset]}:</span>
         <span className="font-display text-xl">{safety.isLoading ? "…" : safety.data}</span>
         <ChevronLeft className="mr-auto size-4" />
       </Link>

@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  applyPreset, PRESET_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  applyPreset, meQuery, PRESET_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
   type Preset, type TaskStatus, type TaskType, type TaskUrgency, todayISO,
 } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
+import { pageHead } from "@/lib/metadata";
 
-const presets = ["open", "waiting_approval", "waiting_decision", "waiting_external", "overdue", "done", "safety", "archived", "all"] as const;
+const presets = ["open", "waiting_approval", "waiting_decision", "waiting_external", "overdue", "done", "safety", "my_action", "archived", "all"] as const;
 const searchSchema = z.object({
   preset: z.enum(presets).optional().catch(undefined),
   q: z.string().optional().catch(undefined),
@@ -27,7 +28,7 @@ type Search = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/_authenticated/_staff/tasks/")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "משימות – הראי״ה" }, { name: "description", content: "רשימת משימות ותקלות" }] }),
+  head: () => pageHead("משימות", "רשימת משימות ותקלות"),
   component: TasksList,
 });
 
@@ -38,12 +39,14 @@ function TasksList() {
   const navigate = useNavigate({ from: "/tasks/" });
   const set = (patch: Partial<Search>) => navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const profiles = useQuery(profilesQuery);
+  const { data: me } = useQuery(meQuery);
   const preset: Preset = s.preset ?? "all";
 
   const list = useQuery({
-    queryKey: ["tasks", "list", s],
+    queryKey: ["tasks", "list", s, me?.id],
+    enabled: preset !== "my_action" || !!me?.id,
     queryFn: async () => {
-      let q = applyPreset(supabase.from("tasks").select("*", { count: "exact" }), preset);
+      let q = applyPreset(supabase.from("tasks").select("*", { count: "exact" }), preset, me?.id);
       if (s.status) q = q.eq("status", s.status as TaskStatus);
       if (s.type) q = q.eq("type", s.type as TaskType);
       if (s.urgency) q = q.eq("urgency", s.urgency as TaskUrgency);
@@ -139,8 +142,8 @@ function TasksList() {
       <div className="rounded-2xl border bg-card">
         {list.isLoading ? <p className="p-5 text-sm text-muted-foreground">טוען…</p>
           : list.error ? <p className="p-5 text-sm text-destructive">שגיאה בטעינה <button className="underline" onClick={() => list.refetch()}>נסו שוב</button></p>
-          : list.data!.rows.length === 0 ? <p className="p-5 text-sm text-muted-foreground">לא נמצאו משימות.</p>
-          : <ul className="divide-y">{list.data!.rows.map((t) => <TaskRow key={t.id} task={t} />)}</ul>}
+          : !list.data?.rows.length ? <p className="p-5 text-sm text-muted-foreground">לא נמצאו משימות.</p>
+          : <ul className="divide-y">{list.data.rows.map((t) => <TaskRow key={t.id} task={t} />)}</ul>}
       </div>
     </div>
   );

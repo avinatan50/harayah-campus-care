@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AuthCard, CodeInput } from "@/components/CodeInput";
 import { setupAdminAccount } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { EASY_CODE_MESSAGE, isEasyCode } from "@/lib/access-code";
 
 export const Route = createFileRoute("/setup")({
   head: () => ({
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/setup")({
       { property: "og:title", content: "הגדרה ראשונית – הראי״ה" },
       { property: "og:description", content: "הגדרת קודי כניסה לצוות הניהול" },
       { name: "robots", content: "noindex" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SetupPage,
@@ -32,6 +35,7 @@ function SetupPage() {
 
   async function submit(e: import("react").FormEvent) {
     e.preventDefault();
+    if (isEasyCode(code)) { setError(EASY_CODE_MESSAGE); return; }
     setError(null); setBusy(true);
     try {
       const res = await setup({ data: { setupKey, email, code } });

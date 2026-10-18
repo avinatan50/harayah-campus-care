@@ -3,7 +3,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
-const Tabs = TabsPrimitive.Root;
+const Tabs = ({ dir = "rtl", ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) => <TabsPrimitive.Root dir={dir} {...props} />;
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -12,7 +12,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
+      "inline-flex min-h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground",
       className,
     )}
     {...props}
