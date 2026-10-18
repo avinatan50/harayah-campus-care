@@ -1,6 +1,6 @@
 # Remaining stages
-- [ ] Requested UI adjustments: red role-specific button, RTL, description near title
-- [ ] Requested code safeguards and registration messages, tests and verification
+- [x] Requested UI adjustments: red role-specific button, RTL, description near title
+- [x] Requested code safeguards and registration messages, tests and verification
 - [ ] Secure user administration, last-admin protection, locations and audit
 - [ ] Explicit approval/decision workflow
 - [ ] Immutable history, realtime, archive and edit collision/idempotency protection
