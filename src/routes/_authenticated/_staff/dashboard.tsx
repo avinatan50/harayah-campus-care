@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/_staff/dashboard")({
   component: Dashboard,
 });
 
-const CARDS: Preset[] = ["open", "waiting_approval", "waiting_decision", "waiting_external", "overdue", "done"];
+const CARDS: Preset[] = ["open", "waiting_approval", "waiting_decision", "waiting_external", "done"];
 
 function useCount(preset: Preset, userId?: string) {
   return useQuery({

@@ -113,7 +113,6 @@ function TasksList() {
         </select>
         <select className={selectCls} value={s.due ?? ""} onChange={(e) => set({ due: (e.target.value || undefined) as Search["due"] })} aria-label="מועד יעד">
           <option value="">כל מועדי היעד</option>
-          <option value="overdue">באיחור</option>
           <option value="week">בשבוע הקרוב</option>
           <option value="none">ללא מועד</option>
         </select>
