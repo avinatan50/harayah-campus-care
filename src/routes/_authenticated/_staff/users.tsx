@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CodeInput } from '@/components/CodeInput';
 import { QueryState } from '@/components/QueryState';
-import { listUsers, saveUser } from '@/lib/users.functions';
+import { deleteUser, listUsers, saveUser } from '@/lib/users.functions';
 import { meQuery, ROLE_LABELS, type AppRole } from '@/lib/tasks';
 import { supabase } from '@/integrations/supabase/client';
 import { pageHead } from '@/lib/metadata';
@@ -31,7 +31,7 @@ function Users(){
  {(['name','phone','email'] as const).map((k)=><div key={k}><Label htmlFor={`user-${k}`}>{({name:'שם מלא',phone:'טלפון',email:'אימייל'})[k]}</Label><Input id={`user-${k}`} type={k==='email'?'email':k==='phone'?'tel':'text'} required={k==='name'} minLength={k==='name'?2:undefined} maxLength={k==='name'?100:k==='phone'?15:255} value={edit[k]} onChange={e=>setEdit({...edit,[k]:e.target.value})}/></div>)}
  <div><Label htmlFor="user-role">תפקיד</Label><select id="user-role" className="h-10 w-full rounded-md border bg-card px-3" value={edit.role} onChange={e=>setEdit({...edit,role:e.target.value as AppRole})}>{Object.entries(ROLE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
  <label className="flex items-center gap-2"><input type="checkbox" checked={edit.active} onChange={e=>setEdit({...edit,active:e.target.checked})}/>חשבון פעיל</label>
- <div><Label>{edit.create?'קוד כניסה (4 ספרות)':'החלפת קוד (ריק = ללא שינוי)'}</Label><CodeInput value={edit.code} onChange={code=>setEdit({...edit,code})}/></div><div className="flex gap-2"><Button disabled={busy||(edit.create&&edit.code.length!==4)}>{busy?'שומר…':'שמירה'}</Button><Button type="button" variant="outline" disabled={busy} onClick={()=>setEdit(null)}>ביטול</Button></div></form></section></div>}
+ <div><Label>{edit.create?'קוד כניסה (4 ספרות)':'החלפת קוד (ריק = ללא שינוי)'}</Label><CodeInput value={edit.code} onChange={code=>setEdit({...edit,code})}/></div><div className="flex flex-wrap gap-2"><Button disabled={busy||(edit.create&&edit.code.length!==4)}>{busy?'שומר…':'שמירה'}</Button><Button type="button" variant="outline" disabled={busy} onClick={()=>setEdit(null)}>ביטול</Button>{!edit.create&&<Button type="button" variant="destructive" disabled={busy} onClick={async()=>{if(!confirm(`למחוק לצמיתות את ${edit.name}? הפעולה אינה הפיכה.`))return;setBusy(true);try{const r=await del({data:{id:edit.id}});if(!r.ok){toast.error(r.error);return;}setEdit(null);await qc.invalidateQueries({queryKey:['users']});toast.success('המשתמש נמחק');}catch{toast.error('המחיקה נכשלה');}finally{setBusy(false);}}}>מחיקת משתמש</Button>}</div></form></section></div>}
  <Locations/><Audit/>
  </div>;
 }
