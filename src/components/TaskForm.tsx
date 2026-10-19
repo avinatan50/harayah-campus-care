@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FilePicker } from "@/components/FilePicker";
 import {
-  locationsQuery, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  locationChildren, locationPath, locationsQuery, profilesQuery, suggestLocation,
+  STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
   type Task, type TaskStatus, type TaskType, type TaskUrgency,
 } from "@/lib/tasks";
 
@@ -133,10 +134,14 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
             <Label htmlFor="due">מועד יעד</Label>
             <Input id="due" type="date" value={v.due_date} onChange={(e) => upd("due_date", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="loc">מיקום במוסד</Label>
-            <Input id="loc" list="locs" value={v.location} onChange={(e) => upd("location", e.target.value)} />
-            <datalist id="locs">{locations.data?.map((l) => <option key={l} value={l} />)}</datalist>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>מיקום במוסד</Label>
+            <LocationPicker
+              value={v.location}
+              locations={locations.data ?? []}
+              suggestion={suggestLocation(locations.data ?? [], `${v.title} ${v.description}`)}
+              onChange={(loc) => upd("location", loc)}
+            />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label htmlFor="next">מה נדרש כדי להתקדם</Label>
