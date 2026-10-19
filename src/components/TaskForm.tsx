@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FilePicker } from "@/components/FilePicker";
 import {
-  locationsQuery, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  locationChildren, locationPath, locationsQuery, profilesQuery, suggestLocation,
+  STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
   type Task, type TaskStatus, type TaskType, type TaskUrgency,
 } from "@/lib/tasks";
 
@@ -133,10 +134,14 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
             <Label htmlFor="due">מועד יעד</Label>
             <Input id="due" type="date" value={v.due_date} onChange={(e) => upd("due_date", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="loc">מיקום במוסד</Label>
-            <Input id="loc" list="locs" value={v.location} onChange={(e) => upd("location", e.target.value)} />
-            <datalist id="locs">{locations.data?.map((l) => <option key={l} value={l} />)}</datalist>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>מיקום במוסד</Label>
+            <LocationPicker
+              value={v.location}
+              locations={locations.data ?? []}
+              suggestion={suggestLocation(locations.data ?? [], `${v.title} ${v.description}`)}
+              onChange={(loc) => upd("location", loc)}
+            />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label htmlFor="next">מה נדרש כדי להתקדם</Label>
@@ -165,5 +170,65 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
       {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
       <Button type="submit" className="h-11 px-8" disabled={busy}>{busy ? "שומר…" : mode === "create" ? "יצירת משימה" : "שמירת שינויים"}</Button>
     </form>
+  );
+}
+
+/** Cascading location selects: building › floor › room, stored as a full path string. */
+function LocationPicker({ value, locations, suggestion, onChange }: {
+  value: string; locations: { id: string; name: string; parent_id: string | null }[];
+  suggestion: string | null; onChange: (path: string) => void;
+}) {
+  // Resolve the current path string back to a chain of selected ids.
+  const chain: string[] = [];
+  {
+    let parent: string | null = null;
+    const parts = value.split(" › ").map((s) => s.trim()).filter(Boolean);
+    for (const part of parts) {
+      const node = locations.find((l) => l.parent_id === parent && l.name === part);
+      if (!node) break;
+      chain.push(node.id);
+      parent = node.id;
+    }
+  }
+  const levels: { parent: string | null; options: typeof locations }[] = [];
+  let parent: string | null = null;
+  while (true) {
+    const options = locationChildren(locations, parent);
+    if (!options.length) break;
+    levels.push({ parent, options });
+    const sel = chain[levels.length - 1];
+    if (!sel) break;
+    parent = sel;
+    if (levels.length >= 6) break;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {levels.map((lvl, i) => (
+          <select
+            key={lvl.parent ?? "root"}
+            className={selectCls + " w-auto min-w-36"}
+            value={chain[i] ?? ""}
+            aria-label={`רמת מיקום ${i + 1}`}
+            onChange={(e) => {
+              const id = e.target.value;
+              onChange(id ? locationPath(locations, id) : i > 0 ? locationPath(locations, chain[i - 1]!) : "");
+            }}
+          >
+            <option value="">{i === 0 ? "בחירת מיקום…" : "הכל / ללא פירוט"}</option>
+            {lvl.options.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        ))}
+        {!levels.length && <p className="text-sm text-muted-foreground">עדיין לא הוגדרו מיקומים — מנהל ראשי יכול להוסיף במסך ניהול משתמשים.</p>}
+      </div>
+      {value && <p className="text-sm text-muted-foreground">נבחר: <span className="font-medium text-foreground">{value}</span></p>}
+      {suggestion && suggestion !== value && (
+        <button type="button" onClick={() => onChange(suggestion)}
+          className="rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground hover:bg-secondary/70">
+          הצעה לפי הנושא: {suggestion}
+        </button>
+      )}
+    </div>
   );
 }

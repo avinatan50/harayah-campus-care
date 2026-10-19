@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
-import { isOverdue, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS, type Task } from "@/lib/tasks";
+import { STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS, type Task } from "@/lib/tasks";
 
 export function StatusBadge({ status }: { status: Task["status"] }) {
   const tone =
@@ -13,7 +13,6 @@ export function StatusBadge({ status }: { status: Task["status"] }) {
 }
 
 export function TaskRow({ task }: { task: Task }) {
-  const late = isOverdue(task);
   return (
     <li>
       <Link to="/tasks/$id" params={{ id: task.id }} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 hover:bg-muted/60">
@@ -27,11 +26,6 @@ export function TaskRow({ task }: { task: Task }) {
           </span>
         )}
         <StatusBadge status={task.status} />
-        {late && (
-          <span className="text-xs font-semibold text-destructive">
-            באיחור{task.delay_reason ? ` · ${task.delay_reason}` : task.next_step ? ` · ${task.next_step}` : ""}
-          </span>
-        )}
         <span className="text-xs text-muted-foreground">{new Date(task.updated_at).toLocaleDateString("he-IL")}</span>
       </Link>
     </li>

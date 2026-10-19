@@ -106,14 +106,44 @@ export const profilesQuery = queryOptions({
   },
 });
 
+export type LocationNode = { id: string; name: string; parent_id: string | null };
+
 export const locationsQuery = queryOptions({
   queryKey: ["locations"],
-  queryFn: async () => {
-    const { data, error } = await supabase.from("locations").select("name").order("name");
+  queryFn: async (): Promise<LocationNode[]> => {
+    const { data, error } = await supabase.from("locations").select("id, name, parent_id").order("name");
     if (error) throw error;
-    return data.map((l) => l.name);
+    return data;
   },
 });
+
+/** Children of a location (null = top level). */
+export const locationChildren = (locs: LocationNode[], parentId: string | null) =>
+  locs.filter((l) => l.parent_id === parentId);
+
+/** Full path string, e.g. "בנין א › קומה 1 › כיתה 3". */
+export function locationPath(locs: LocationNode[], id: string): string {
+  const parts: string[] = [];
+  let cur = locs.find((l) => l.id === id);
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    parts.unshift(cur.name);
+    cur = locs.find((l) => l.id === cur!.parent_id);
+  }
+  return parts.join(" › ");
+}
+
+/** Suggest a location by matching location names against the task title/description. */
+export function suggestLocation(locs: LocationNode[], text: string): string | null {
+  const t = text.trim();
+  if (!t) return null;
+  // Prefer the most specific (longest) matching name.
+  const matches = locs.filter((l) => l.name.length >= 2 && t.includes(l.name));
+  if (!matches.length) return null;
+  matches.sort((a, b) => b.name.length - a.name.length);
+  return locationPath(locs, matches[0]!.id);
+}
 
 export const isOverdue = (t: Pick<Task, "due_date" | "status" | "archived">) =>
   !!t.due_date && !t.archived && !CLOSED_STATUSES.includes(t.status) && t.due_date < todayISO();
