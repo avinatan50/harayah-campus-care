@@ -142,7 +142,7 @@ export function suggestLocation(locs: LocationNode[], text: string): string | nu
   const matches = locs.filter((l) => l.name.length >= 2 && t.includes(l.name));
   if (!matches.length) return null;
   matches.sort((a, b) => b.name.length - a.name.length);
-  return locationPath(locs, matches[0].id);
+  return locationPath(locs, matches[0]!.id);
 }
 
 export const isOverdue = (t: Pick<Task, "due_date" | "status" | "archived">) =>

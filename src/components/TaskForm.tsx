@@ -213,7 +213,7 @@ function LocationPicker({ value, locations, suggestion, onChange }: {
             aria-label={`רמת מיקום ${i + 1}`}
             onChange={(e) => {
               const id = e.target.value;
-              onChange(id ? locationPath(locations, id) : i > 0 ? locationPath(locations, chain[i - 1]) : "");
+              onChange(id ? locationPath(locations, id) : i > 0 ? locationPath(locations, chain[i - 1]!) : "");
             }}
           >
             <option value="">{i === 0 ? "בחירת מיקום…" : "הכל / ללא פירוט"}</option>
