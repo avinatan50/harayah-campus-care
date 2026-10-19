@@ -58,3 +58,19 @@ export const saveUser = createServerFn({ method: 'POST' }).middleware([requireSu
   }
   return { ok: true };
 });
+
+export const deleteUser = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
+  const { data: allowed } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'super_admin' });
+  if (!allowed) throw new Error('אין הרשאה לניהול משתמשים');
+  if (data.id === context.userId) return { ok: false, error: 'לא ניתן למחוק את החשבון שאתם מחוברים אליו' };
+  const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
+  const { data: isAdmin } = await db.rpc('has_role', { _user_id: data.id, _role: 'super_admin' });
+  if (isAdmin) {
+    const { count } = await db.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'super_admin');
+    if ((count ?? 0) <= 1) return { ok: false, error: 'לא ניתן למחוק את המנהל הראשי האחרון' };
+  }
+  const result = await db.auth.admin.deleteUser(data.id);
+  if (result.error) return { ok: false, error: 'המחיקה נכשלה; נסו שוב' };
+  await db.from('admin_audit').insert({ actor_id: context.userId, target_id: data.id, action: 'user_deleted' });
+  return { ok: true };
+});
