@@ -26,11 +26,6 @@ export function TaskRow({ task }: { task: Task }) {
           </span>
         )}
         <StatusBadge status={task.status} />
-        {late && (
-          <span className="text-xs font-semibold text-destructive">
-            באיחור{task.delay_reason ? ` · ${task.delay_reason}` : task.next_step ? ` · ${task.next_step}` : ""}
-          </span>
-        )}
         <span className="text-xs text-muted-foreground">{new Date(task.updated_at).toLocaleDateString("he-IL")}</span>
       </Link>
     </li>
