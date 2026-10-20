@@ -43,17 +43,23 @@ export const todayISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia
 export const formatDate = (d: string | null) => d ? new Date(d).toLocaleString('he-IL', {timeZone:'Asia/Jerusalem',dateStyle:'short',timeStyle:'short'}) : '—';
 export const waitingDays = (d: string | null) => d ? Math.max(0,Math.floor((Date.now()-new Date(d).getTime())/86400000)) : 0;
 
+/** Presets a role may see: staff get "my_action" instead of safety hazards. */
+export const presetsForRole = (role: AppRole | undefined): Preset[] =>
+  role === "staff"
+    ? ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "my_action", "archived", "all"]
+    : ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "safety", "my_action", "archived", "all"];
+export const attentionPresetFor = (role: AppRole | undefined): Preset => (role === "staff" ? "my_action" : "safety");
+
 /** Single source of truth for dashboard counters and list filters. */
 export type Preset =
   | "open" | "waiting_approval" | "waiting_decision" | "waiting_external"
-  | "overdue" | "done" | "safety" | "my_action" | "archived" | "all";
+  | "done" | "safety" | "my_action" | "archived" | "all";
 
 export const PRESET_LABELS: Record<Preset, string> = {
   open: "משימות פתוחות",
   waiting_approval: "ממתין לאישור",
   waiting_decision: "ממתין להחלטה",
   waiting_external: "ממתין לגורם חיצוני",
-  overdue: "משימות באיחור",
   done: "הושלמו",
   safety: "מפגעי בטיחות פתוחים",
   my_action: "ממתין לפעולה שלי",
@@ -68,7 +74,6 @@ export function applyPreset<Q extends { eq: any; not: any; lt: any }>(q: Q, pres
     case "archived": return q.eq("archived", true);
     case "all": return q.eq("archived", false);
     case "open": return q.eq("archived", false).not("status", "in", notClosed);
-    case "overdue": return q.eq("archived", false).not("status", "in", notClosed).lt("due_date", todayISO());
     case "safety": return q.eq("archived", false).not("status", "in", notClosed).eq("is_safety", true);
     case "my_action": return q.eq("archived", false).not("status", "in", notClosed).eq("assignee_id", userId ?? "00000000-0000-0000-0000-000000000000");
     case "done": return q.eq("archived", false).eq("status", "closed");

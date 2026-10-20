@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { applyPreset, meQuery, PRESET_LABELS, type Preset } from "@/lib/tasks";
+import { applyPreset, attentionPresetFor, PRESET_LABELS, type Preset } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
 import { pageHead } from "@/lib/metadata";
 
@@ -25,9 +25,9 @@ function useCount(preset: Preset, userId?: string) {
 }
 
 function Dashboard() {
-  const { data: me } = useQuery(meQuery);
-  const attentionPreset = me?.role === "staff" ? "my_action" : "safety";
-  const safety = useCount(attentionPreset, me?.id);
+  const { me } = Route.useRouteContext();
+  const attentionPreset = attentionPresetFor(me.role);
+  const attention = useCount(attentionPreset, me.id);
   const recent = useQuery({
     queryKey: ["tasks", "recent"],
     queryFn: async () => {
@@ -47,7 +47,7 @@ function Dashboard() {
       >
         <AlertTriangle className="size-5" />
         <span>{PRESET_LABELS[attentionPreset]}:</span>
-        <span className="font-display text-xl">{safety.isLoading ? "…" : safety.data}</span>
+        <span className="font-display text-xl">{attention.isLoading ? "…" : attention.data}</span>
         <ChevronLeft className="mr-auto size-4" />
       </Link>
 
@@ -76,7 +76,7 @@ function Dashboard() {
 
 function CountCard({ preset }: { preset: Preset }) {
   const q = useCount(preset);
-  const tone = preset === "overdue" && (q.data ?? 0) > 0 ? "text-destructive" : preset === "done" ? "text-success" : "text-primary";
+  const tone = preset === "done" ? "text-success" : "text-primary";
   return (
     <Link to="/tasks" search={{ preset }} className="rounded-2xl border bg-card p-4 transition hover:border-primary hover:shadow-sm">
       <div className="text-sm text-muted-foreground">{PRESET_LABELS[preset]}</div>

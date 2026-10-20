@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS, type Task } from "@/lib/tasks";
+import { meQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS, type Task } from "@/lib/tasks";
 
 export function StatusBadge({ status }: { status: Task["status"] }) {
   const tone =
@@ -13,11 +14,13 @@ export function StatusBadge({ status }: { status: Task["status"] }) {
 }
 
 export function TaskRow({ task }: { task: Task }) {
+  const { data: me } = useQuery(meQuery);
+  const showSafety = task.is_safety && me?.role === "super_admin";
   return (
     <li>
       <Link to="/tasks/$id" params={{ id: task.id }} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 hover:bg-muted/60">
         <span className="font-mono text-xs text-muted-foreground">#{task.number}</span>
-        {task.is_safety && <AlertTriangle className="size-4 text-destructive" aria-label="מפגע בטיחותי" />}
+        {showSafety && <AlertTriangle className="size-4 text-destructive" aria-label="מפגע בטיחותי" />}
         <span className="min-w-0 flex-1 truncate font-medium">{task.title}</span>
         <span className="text-xs text-muted-foreground">{TYPE_LABELS[task.type]}</span>
         {task.urgency !== "normal" && (

@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  applyPreset, meQuery, PRESET_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  applyPreset, presetsForRole, PRESET_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
   type Preset, type TaskStatus, type TaskType, type TaskUrgency, todayISO,
 } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
 import { pageHead } from "@/lib/metadata";
 
-const presets = ["open", "waiting_approval", "waiting_decision", "waiting_external", "overdue", "done", "safety", "my_action", "archived", "all"] as const;
+const presets = ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "safety", "my_action", "archived", "all"] as const;
 const searchSchema = z.object({
   preset: z.enum(presets).optional().catch(undefined),
   q: z.string().optional().catch(undefined),
@@ -21,7 +21,7 @@ const searchSchema = z.object({
   type: z.string().optional().catch(undefined),
   urgency: z.string().optional().catch(undefined),
   safety: z.boolean().optional().catch(undefined),
-  due: z.enum(["overdue", "week", "none"]).optional().catch(undefined),
+  due: z.enum(["week", "none"]).optional().catch(undefined),
   sort: z.enum(["created", "updated", "due"]).optional().catch(undefined),
 });
 type Search = z.infer<typeof searchSchema>;
@@ -39,20 +39,22 @@ function TasksList() {
   const navigate = useNavigate({ from: "/tasks/" });
   const set = (patch: Partial<Search>) => navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const profiles = useQuery(profilesQuery);
-  const { data: me } = useQuery(meQuery);
-  const preset: Preset = s.preset ?? "all";
+  const { me } = Route.useRouteContext();
+  const isStaff = me.role === "staff";
+  const allowed = presetsForRole(me.role);
+  // Staff never see safety-hazard views; an old "safety" link opens their own queue instead.
+  const preset: Preset = s.preset === "safety" && isStaff ? "my_action" : s.preset ?? "all";
+  const safetyFilter = !isStaff && !!s.safety;
 
   const list = useQuery({
-    queryKey: ["tasks", "list", s, me?.id],
-    enabled: preset !== "my_action" || !!me?.id,
-    queryFn: async () => {
-      let q = applyPreset(supabase.from("tasks").select("*", { count: "exact" }), preset, me?.id);
+    queryKey: ["tasks", "list", s, preset, safetyFilter, me.id],
+        queryFn: async () => {
+      let q = applyPreset(supabase.from("tasks").select("*", { count: "exact" }), preset, me.id);
       if (s.status) q = q.eq("status", s.status as TaskStatus);
       if (s.type) q = q.eq("type", s.type as TaskType);
       if (s.urgency) q = q.eq("urgency", s.urgency as TaskUrgency);
       if (s.assignee) q = s.assignee === "none" ? q.is("assignee_id", null) : q.eq("assignee_id", s.assignee);
-      if (s.safety) q = q.eq("is_safety", true);
-      if (s.due === "overdue") q = q.lt("due_date", todayISO()).not("status", "in", "(closed,cancelled)");
+      if (safetyFilter) q = q.eq("is_safety", true);
       if (s.due === "none") q = q.is("due_date", null);
       if (s.due === "week") {
         const w = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
@@ -77,8 +79,8 @@ function TasksList() {
   if (s.type) active.push({ key: "type", label: TYPE_LABELS[s.type as TaskType] });
   if (s.urgency) active.push({ key: "urgency", label: `דחיפות ${URGENCY_LABELS[s.urgency as TaskUrgency]}` });
   if (s.assignee) active.push({ key: "assignee", label: s.assignee === "none" ? "ללא אחראי" : `אחראי: ${profiles.data?.find((p) => p.id === s.assignee)?.full_name ?? ""}` });
-  if (s.safety) active.push({ key: "safety", label: "מפגע בטיחותי" });
-  if (s.due) active.push({ key: "due", label: { overdue: "באיחור", week: "יעד בשבוע הקרוב", none: "ללא מועד יעד" }[s.due] });
+  if (safetyFilter) active.push({ key: "safety", label: "מפגע בטיחותי" });
+  if (s.due) active.push({ key: "due", label: { week: "יעד בשבוע הקרוב", none: "ללא מועד יעד" }[s.due] });
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -92,7 +94,7 @@ function TasksList() {
           onKeyDown={(e) => { if (e.key === "Enter") set({ q: e.currentTarget.value || undefined }); }}
           onBlur={(e) => set({ q: e.currentTarget.value || undefined })} />
         <select className={selectCls} value={preset} onChange={(e) => set({ preset: e.target.value as Preset })} aria-label="תצוגה">
-          {presets.map((p) => <option key={p} value={p}>{PRESET_LABELS[p]}</option>)}
+          {allowed.map((p) => <option key={p} value={p}>{PRESET_LABELS[p]}</option>)}
         </select>
         <select className={selectCls} value={s.status ?? ""} onChange={(e) => set({ status: e.target.value || undefined })} aria-label="סטטוס">
           <option value="">כל הסטטוסים</option>
@@ -116,9 +118,11 @@ function TasksList() {
           <option value="week">בשבוע הקרוב</option>
           <option value="none">ללא מועד</option>
         </select>
-        <label className="flex items-center gap-1.5 text-sm">
-          <input type="checkbox" checked={!!s.safety} onChange={(e) => set({ safety: e.target.checked || undefined })} /> מפגע בטיחותי
-        </label>
+        {!isStaff && (
+          <label className="flex items-center gap-1.5 text-sm">
+            <input type="checkbox" checked={!!s.safety} onChange={(e) => set({ safety: e.target.checked || undefined })} /> מפגע בטיחותי
+          </label>
+        )}
         <select className={selectCls} value={s.sort ?? "updated"} onChange={(e) => set({ sort: e.target.value as Search["sort"] })} aria-label="מיון">
           <option value="updated">מיון: עדכון אחרון</option>
           <option value="created">מיון: תאריך פתיחה</option>

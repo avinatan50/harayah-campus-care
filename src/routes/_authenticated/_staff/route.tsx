@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, Menu, X, AlertTriangle, Bell, CheckCheck, BarChart3, Users } from "lucide-react";
+import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, Menu, X, AlertTriangle, Bell, CheckCheck, BarChart3, Users, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, ROLE_LABELS } from "@/lib/tasks";
@@ -44,11 +44,12 @@ const NAV = [
 
 function StaffLayout() {
   useRealtime();
-  const { data: me } = useQuery(meQuery);
+  const { me } = Route.useRouteContext();
+  const isStaff = me.role === "staff";
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const notifications=useQuery({queryKey:['notifications','unread'],queryFn:async()=>{const r=await supabase.from('notifications').select('id',{count:'exact',head:true}).is('read_at',null);if(r.error)throw r.error;return r.count??0;}});
+  const notifications=useQuery({queryKey:['notifications','unread',isStaff],queryFn:async()=>{const r=await supabase.from('notifications').select('id',{count:'exact',head:true}).is('read_at',null).not('kind','in',isStaff?'(overdue,safety)':'(overdue)');if(r.error)throw r.error;return r.count??0;}});
   useEffect(()=>{supabase.rpc('refresh_due_notifications').then(({error})=>{if(!error)qc.invalidateQueries({queryKey:['notifications']});});const timer=setInterval(()=>{supabase.rpc('refresh_due_notifications').then(({error})=>{if(!error)qc.invalidateQueries({queryKey:['notifications']});});},60_000);return()=>clearInterval(timer);},[qc]);
 
   async function signOut() {
@@ -63,12 +64,12 @@ function StaffLayout() {
         <Link
           key={n.label}
           to={n.to}
-          search={(n.search?.preset === "safety" && me?.role === "staff" ? { preset: "my_action" } : n.search) as never}
+          search={(n.search?.preset === "safety" && isStaff ? { preset: "my_action" } : n.search) as never}
           onClick={() => setOpen(false)}
           activeOptions={{ includeSearch: true }}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold"
         >
-          <n.icon className="size-4" /> {n.search?.preset === "safety" && me?.role === "staff" ? "ממתין לפעולה שלי" : n.label}{n.to==='/notifications'&&!!notifications.data&&<span className="mr-auto text-xs">{notifications.data}</span>}
+          {n.search?.preset === "safety" && isStaff ? <ListChecks className="size-4" /> : <n.icon className="size-4" />} {n.search?.preset === "safety" && isStaff ? "ממתין לפעולה שלי" : n.label}{n.to==='/notifications'&&!!notifications.data&&<span className="mr-auto text-xs">{notifications.data}</span>}
         </Link>
       ))}
       {me?.role==='super_admin'&&<Link to="/users" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"><Users className="size-4"/>ניהול משתמשים</Link>}

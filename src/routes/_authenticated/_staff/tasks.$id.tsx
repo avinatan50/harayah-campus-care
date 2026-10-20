@@ -13,7 +13,7 @@ import { TaskForm, toFormValues, toPayload } from "@/components/TaskForm";
 import { StatusBadge, TaskRow } from "@/components/TaskRow";
 import { FilePicker } from "@/components/FilePicker";
 import {
-  FIELD_LABELS, isOverdue, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  FIELD_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
   uploadTaskFiles, formatDate, type TaskStatus, type Task,
 } from "@/lib/tasks";
 import { pageHead } from "@/lib/metadata";
@@ -57,7 +57,6 @@ function TaskDetail() {
   if (task.error) return <p className="text-destructive">שגיאה בטעינה <button className="underline" onClick={() => task.refetch()}>נסו שוב</button></p>;
   const t = task.data;
   if (!t) return <p>המשימה לא נמצאה. <Link to="/dashboard" className="text-primary underline">ללוח הבקרה</Link></p>;
-  const late = isOverdue(t);
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -95,7 +94,7 @@ function TaskDetail() {
         )}
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
           <Info k="אחראי" v={name(t.assignee_id)} />
-          <Info k="מועד יעד" v={t.due_date ? new Date(t.due_date).toLocaleDateString("he-IL") : "—"} danger={late} extra={late ? "באיחור" : undefined} />
+          <Info k="מועד יעד" v={t.due_date ? new Date(t.due_date).toLocaleDateString("he-IL") : "—"} />
           <Info k="מיקום" v={t.location ?? "—"} />
           <Info k="ממתין מאז" v={t.waiting_since ? fmt(t.waiting_since) : "—"} />
           <Info k="נפתח" v={`${fmt(t.created_at)} · ${name(t.created_by)}`} />

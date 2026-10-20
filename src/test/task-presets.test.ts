@@ -13,3 +13,15 @@ describe("Personal action list and counter", () => {
     expect(calls).toEqual([["eq", "archived", false], ["not", "status", "in", "(closed,cancelled)"], ["eq", "assignee_id", "current-user"]]);
   });
 });
+import { presetsForRole, attentionPresetFor } from "@/lib/tasks";
+describe("role presets", () => {
+  it("staff see 'my_action' and never safety", () => {
+    expect(attentionPresetFor("staff")).toBe("my_action");
+    expect(presetsForRole("staff")).not.toContain("safety");
+    expect(presetsForRole("staff")).toContain("my_action");
+  });
+  it("no role sees an overdue view", () => {
+    expect(presetsForRole("staff")).not.toContain("overdue");
+    expect(presetsForRole("super_admin")).not.toContain("overdue");
+  });
+});
