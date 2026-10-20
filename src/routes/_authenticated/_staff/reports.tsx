@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { QueryState } from '@/components/QueryState';
 import { supabase } from '@/integrations/supabase/client';
 import { profilesQuery, STATUS_LABELS, TYPE_LABELS, waitingDays, type Task } from '@/lib/tasks';
-import { matchesPreset, summaryPresets, PRESET_LABELS, exportCsv } from '@/lib/reports';
+import { matchesPreset, summaryPresetsFor, PRESET_LABELS, exportCsv } from '@/lib/reports';
 import { pageHead } from '@/lib/metadata';
-export const Route=createFileRoute('/_authenticated/_staff/reports')({head:()=>pageHead('דוחות וייצוא','דוחות משימות, זמני המתנה, מפגעי בטיחות וייצוא נתונים בעברית'),component:Reports});
-function Reports(){const [from,setFrom]=useState('');const [to,setTo]=useState('');const [assignee,setAssignee]=useState('');const [type,setType]=useState('');const [status,setStatus]=useState('');const [archive,setArchive]=useState(false);const p=useQuery(profilesQuery);const name=(id:string|null)=>p.data?.find(x=>x.id===id)?.full_name??'—';const q=useQuery({queryKey:['tasks','reports'],queryFn:async()=>{const all:Task[]=[];for(let offset=0;;offset+=1000){const r=await supabase.from('tasks').select('*').order('number').range(offset,offset+999);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<1000)break;}return all;}});
+export const Route=createFileRoute('/_authenticated/_staff/reports')({head:()=>pageHead('דוחות וייצוא','דוחות משימות, זמני המתנה וייצוא נתונים בעברית'),component:Reports});
+function Reports(){const {me}=Route.useRouteContext();const summaryPresets=summaryPresetsFor(me.role);const [from,setFrom]=useState('');const [to,setTo]=useState('');const [assignee,setAssignee]=useState('');const [type,setType]=useState('');const [status,setStatus]=useState('');const [archive,setArchive]=useState(false);const p=useQuery(profilesQuery);const name=(id:string|null)=>p.data?.find(x=>x.id===id)?.full_name??'—';const q=useQuery({queryKey:['tasks','reports'],queryFn:async()=>{const all:Task[]=[];for(let offset=0;;offset+=1000){const r=await supabase.from('tasks').select('*').order('number').range(offset,offset+999);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<1000)break;}return all;}});
  const rows=(q.data??[]).filter(t=>(archive||!t.archived)&&(!assignee||t.assignee_id===assignee)&&(!type||t.type===type)&&(!status||t.status===status));const inPeriod=(d:string|null)=>!!d&&(!from||d.slice(0,10)>=from)&&(!to||d.slice(0,10)<=to);const opened=rows.filter(t=>inPeriod(t.created_at));const completed=rows.filter(t=>t.status==='closed'&&inPeriod(t.completed_at));
  // Period applies to opening date for inventory summaries; completion totals use completion date.
  const shown=opened;
