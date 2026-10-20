@@ -639,6 +639,7 @@ export type Database = {
         | "closed"
         | "recurring_fault"
         | "cancelled"
+        | "approved"
       task_type: "task" | "fault" | "request" | "decision"
       task_urgency: "normal" | "high" | "critical"
     }
@@ -780,6 +781,7 @@ export const Constants = {
         "closed",
         "recurring_fault",
         "cancelled",
+        "approved",
       ],
       task_type: ["task", "fault", "request", "decision"],
       task_urgency: ["normal", "high", "critical"],
