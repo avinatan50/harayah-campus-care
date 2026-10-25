@@ -1,4 +1,5 @@
 # Remaining stages
+- [ ] Match uploaded reference design and mobile navigation; move safety/personal action, archive and notifications under More
 - [ ] Current request: inline approval/decision notes and task/fault destination, approved status, ordered simplified statuses, collapsed advanced details, verification
 - [x] Requested UI adjustments: red role-specific button, RTL, description near title
 - [x] Requested code safeguards and registration messages, tests and verification
