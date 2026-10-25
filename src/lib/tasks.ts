@@ -64,7 +64,7 @@ export const PRESET_LABELS: Record<Preset, string> = {
   waiting_approval: "ממתין לאישור",
   waiting_decision: "ממתין להחלטה",
   waiting_external: "ממתין לגורם חיצוני",
-  done: "הושלמו",
+  done: "טופלו",
   safety: "מפגעי בטיחות פתוחים",
   my_action: "ממתין לפעולה שלי",
   archived: "ארכיון",
