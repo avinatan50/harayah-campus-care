@@ -1,11 +1,13 @@
 # Remaining stages
-- [ ] Current request: inline approval/decision notes and task/fault destination, approved status, ordered simplified statuses, collapsed advanced details, verification
+- [x] Match uploaded reference design and mobile navigation; move safety/personal action, archive and notifications under More
+- [x] Current request: inline approval/decision notes and task/fault destination, approved status, ordered simplified statuses, collapsed advanced details, verified with the requesting user's account
 - [x] Requested UI adjustments: red role-specific button, RTL, description near title
 - [x] Requested code safeguards and registration messages, tests and verification
-- [ ] Secure user administration, last-admin protection, locations and audit
-- [ ] Explicit approval/decision workflow
-- [ ] Immutable history, realtime, archive and edit collision/idempotency protection
-- [ ] Subtasks, recurring faults and safety return checks
-- [ ] Private notifications and preferences
-- [ ] Reports, Hebrew CSV and printable PDF
-- [ ] Mobile/file usability, metadata and end-to-end verification
+- [x] Secure user administration, last-admin protection, locations and audit
+- [x] Explicit approval/decision workflow
+- [x] Immutable history, realtime, archive and edit collision/idempotency protection
+- [x] Subtasks, recurring faults and safety return checks
+- [x] Private notifications and preferences
+- [x] Reports, Hebrew CSV and printable PDF
+- [x] Mobile/file usability, metadata and end-to-end verification for current request
+- [ ] Direct verification of the staff account named בדיקה — blocked by the previously declined account permission; no new request made

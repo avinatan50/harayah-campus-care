@@ -257,6 +257,7 @@ export type Database = {
           approved_amount: number | null
           body: string
           created_at: string
+          destination_type: Database["public"]["Enums"]["task_type"] | null
           id: string
           next_status: Database["public"]["Enums"]["task_status"]
           outcome: string
@@ -268,6 +269,7 @@ export type Database = {
           approved_amount?: number | null
           body: string
           created_at?: string
+          destination_type?: Database["public"]["Enums"]["task_type"] | null
           id?: string
           next_status: Database["public"]["Enums"]["task_status"]
           outcome: string
@@ -279,6 +281,7 @@ export type Database = {
           approved_amount?: number | null
           body?: string
           created_at?: string
+          destination_type?: Database["public"]["Enums"]["task_type"] | null
           id?: string
           next_status?: Database["public"]["Enums"]["task_status"]
           outcome?: string
@@ -602,6 +605,19 @@ export type Database = {
         Args: {
           _amount: number
           _body: string
+          _expected: string
+          _key: string
+          _next: Database["public"]["Enums"]["task_status"]
+          _outcome: string
+          _task: string
+        }
+        Returns: string
+      }
+      record_task_resolution: {
+        Args: {
+          _amount?: number
+          _body: string
+          _destination?: Database["public"]["Enums"]["task_type"]
           _expected: string
           _key: string
           _next: Database["public"]["Enums"]["task_status"]

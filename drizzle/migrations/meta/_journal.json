@@ -36,6 +36,13 @@
       "when": 1792478233733,
       "tag": "0004_add_approved_task_status",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792915543820,
+      "tag": "0005_task_resolution_workflow",
+      "breakpoints": true
     }
   ]
 }

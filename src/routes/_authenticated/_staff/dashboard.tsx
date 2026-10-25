@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ChevronLeft } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ListTodo, Gavel, Scale, ExternalLink, CircleCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyPreset, attentionPresetFor, PRESET_LABELS, type Preset } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
@@ -43,7 +43,7 @@ function Dashboard() {
       <Link
         to="/tasks"
         search={{ preset: attentionPreset }}
-        className="flex items-center gap-3 rounded-xl bg-destructive px-4 py-2.5 font-semibold text-destructive-foreground"
+        className="flex items-center gap-3 rounded-xl border-2 border-destructive/50 bg-destructive/5 px-4 py-4 font-semibold text-destructive"
       >
         <AlertTriangle className="size-5" />
         <span>{PRESET_LABELS[attentionPreset]}:</span>
@@ -55,8 +55,8 @@ function Dashboard() {
         {CARDS.map((p) => <CountCard key={p} preset={p} />)}
       </div>
 
-      <section className="rounded-2xl border bg-card">
-        <div className="flex items-center justify-between border-b px-5 py-3">
+      <section>
+        <div className="mb-4 flex items-center justify-between pt-2">
           <h2 className="font-semibold">עודכנו לאחרונה</h2>
           <Link to="/tasks" search={{ preset: "all", sort: "updated" }} className="text-sm text-primary hover:underline">לכל המשימות</Link>
         </div>
@@ -65,7 +65,7 @@ function Dashboard() {
         ) : recent.error ? (
           <p className="p-5 text-sm text-destructive">שגיאה בטעינה</p>
         ) : recent.data?.length ? (
-          <ul className="divide-y">{recent.data.map((t) => <TaskRow key={t.id} task={t} />)}</ul>
+          <ul className="grid gap-3">{recent.data.map((t) => <TaskRow key={t.id} task={t} />)}</ul>
         ) : (
           <p className="p-5 text-sm text-muted-foreground">אין עדיין משימות. לחצו „משימה חדשה” כדי להתחיל.</p>
         )}
@@ -76,11 +76,12 @@ function Dashboard() {
 
 function CountCard({ preset }: { preset: Preset }) {
   const q = useCount(preset);
-  const tone = preset === "done" ? "text-success" : "text-primary";
+  const Icon = preset === 'done' ? CircleCheck : preset === 'waiting_approval' ? Gavel : preset === 'waiting_decision' ? Scale : preset === 'waiting_external' ? ExternalLink : ListTodo;
+  const tone = preset === 'done' ? 'bg-success/15 text-success' : preset === 'waiting_external' ? 'bg-external-soft text-external' : preset === 'waiting_approval' || preset === 'waiting_decision' ? 'bg-decision-soft text-decision' : 'bg-info-soft text-info';
   return (
-    <Link to="/tasks" search={{ preset }} className="rounded-2xl border bg-card p-4 transition hover:border-primary hover:shadow-sm">
-      <div className="text-sm text-muted-foreground">{PRESET_LABELS[preset]}</div>
-      <div className={`mt-2 font-display text-3xl font-bold ${tone}`}>{q.isLoading ? "…" : q.error ? "!" : q.data}</div>
+    <Link to="/tasks" search={{ preset }} className="rounded-xl border bg-card p-4 transition hover:border-input">
+      <div className="flex items-center justify-between"><span className={`flex size-10 items-center justify-center rounded-lg ${tone}`}><Icon className="size-5"/></span><span className="font-display text-2xl font-semibold">{q.isLoading ? "…" : q.error ? "!" : q.data}</span></div>
+      <div className="mt-3 text-sm font-medium">{PRESET_LABELS[preset]}</div>
     </Link>
   );
 }

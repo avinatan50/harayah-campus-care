@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { FilePicker } from "@/components/FilePicker";
 import {
   locationChildren, locationPath, locationsQuery, profilesQuery, suggestLocation,
-  STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
   type Task, type TaskStatus, type TaskType, type TaskUrgency,
 } from "@/lib/tasks";
 
@@ -54,7 +54,7 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
 }) {
   const [v, setV] = useState(initial);
   const [files, setFiles] = useState<File[]>([]);
-  const [advanced, setAdvanced] = useState(mode === "edit");
+  const [advanced, setAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const profiles = useQuery(profilesQuery);
   const locations = useQuery(locationsQuery);
@@ -97,7 +97,7 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
           <Label htmlFor="status">סטטוס</Label>
           <select id="status" className={selectCls} value={v.status} onChange={(e) => upd("status", e.target.value as TaskStatus | "")}>
             {mode === "create" && <option value="">ברירת מחדל ({defaultStatusHint})</option>}
-            {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            {STATUS_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </select>
         </div>
         <div className="space-y-1.5">
@@ -129,7 +129,7 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
           פרטים מתקדמים <ChevronDown className={`size-4 transition ${advanced ? "rotate-180" : ""}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="space-y-1.5 md:col-span-2"><Label htmlFor="related-task">תקלה לאחר ביצוע — משימה מקורית</Label><select id="related-task" className={selectCls} value={v.related_task_id} onChange={e=>{upd('related_task_id',e.target.value);if(mode==='create'&&e.target.value){upd('type','fault');upd('status','recurring_fault');}}}><option value="">ללא קישור</option>{past.data?.map(t=><option key={t.id} value={t.id}>#{t.number} {t.title}</option>)}</select></div>
+          <div className="space-y-1.5 md:col-span-2"><Label htmlFor="related-task">תקלה לאחר ביצוע — משימה מקורית</Label><select id="related-task" className={selectCls} value={v.related_task_id} onChange={e=>{upd('related_task_id',e.target.value);if(mode==='create'&&e.target.value){upd('type','fault');upd('status','new');}}}><option value="">ללא קישור</option>{past.data?.map(t=><option key={t.id} value={t.id}>#{t.number} {t.title}</option>)}</select></div>
           <div className="space-y-1.5">
             <Label htmlFor="due">מועד יעד</Label>
             <Input id="due" type="date" value={v.due_date} onChange={(e) => upd("due_date", e.target.value)} />

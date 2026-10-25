@@ -44,17 +44,23 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-decision: var(--decision);
+  --color-decision-soft: var(--decision-soft);
+  --color-external: var(--external);
+  --color-external-soft: var(--external-soft);
 }
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.985 0.006 85);
-  --foreground: oklch(0.24 0.03 230);
+  --background: oklch(0.982 0.003 240);
+  --foreground: oklch(0.16 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.24 0.03 230);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.24 0.03 230);
-  --primary: oklch(0.45 0.09 215);
+  --primary: oklch(0.18 0 0);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.95 0.015 210);
   --secondary-foreground: oklch(0.3 0.05 220);
@@ -71,14 +77,20 @@
   --border: oklch(0.9 0.012 85);
   --input: oklch(0.88 0.012 85);
   --ring: oklch(0.45 0.09 215);
-  --sidebar: oklch(0.27 0.04 225);
-  --sidebar-foreground: oklch(0.93 0.01 220);
-  --sidebar-primary: oklch(0.8 0.12 80);
-  --sidebar-primary-foreground: oklch(0.25 0.04 225);
-  --sidebar-accent: oklch(0.34 0.045 225);
-  --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(0.36 0.04 225);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.3 0 0);
+  --sidebar-primary: oklch(0.18 0 0);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.96 0.004 240);
+  --sidebar-accent-foreground: oklch(0.16 0 0);
+  --sidebar-border: oklch(0.9 0.004 240);
   --sidebar-ring: oklch(0.8 0.12 80);
+  --info: oklch(0.58 0.2 255);
+  --info-soft: oklch(0.94 0.03 255);
+  --decision: oklch(0.57 0.22 295);
+  --decision-soft: oklch(0.95 0.025 295);
+  --external: oklch(0.64 0.19 45);
+  --external-soft: oklch(0.96 0.03 65);
 }
 
 @layer base {
@@ -92,6 +104,12 @@
   }
   h1, h2, h3 { font-family: var(--font-display); }
 }
+
+.task-item { min-width: 0; list-style: none; }
+.task-item > a { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+.task-item:hover > a { border-color: var(--input); }
+.mobile-tab { min-width: 0; }
+.mobile-tab[data-status="active"] { color: var(--foreground); font-weight: 600; }
 
 /* Hebrew alignment also applies to portaled menus and explicitly LTR numeric fields. */
 html[dir="rtl"] :is(h1, h2, h3, h4, h5, h6, label, input:not([data-input-otp]), textarea, select, option, [role="menu"], [role="menuitem"], [role="listbox"], [role="option"], [role="dialog"]) {
