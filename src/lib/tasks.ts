@@ -14,15 +14,19 @@ export const TYPE_LABELS: Record<TaskType, string> = {
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   new: "חדש",
   in_progress: "בטיפול",
-  waiting_decision: "ממתין להחלטה",
   waiting_approval: "ממתין לאישור",
+  waiting_decision: "ממתין להחלטה",
   waiting_external: "ממתין לגורם חיצוני",
+  approved: "מאושר",
+  closed: "טופל",
   paused: "מושהה",
-  done_pending_close: "בוצע — ממתין לסגירה",
-  closed: "הושלם ונסגר",
-  recurring_fault: "תקלה חוזרת / לאחר ביצוע",
   cancelled: "בוטל",
+  done_pending_close: "טופל",
+  recurring_fault: "חדש",
 };
+export const STATUS_ORDER: TaskStatus[] = ['new', 'in_progress', 'waiting_approval', 'waiting_decision', 'waiting_external', 'approved', 'closed', 'paused', 'cancelled'];
+export const STATUS_OPTIONS = STATUS_ORDER.map((status): [TaskStatus, string] => [status, STATUS_LABELS[status]]);
+export const normalizeStatus = (status: TaskStatus): TaskStatus => status === 'done_pending_close' ? 'closed' : status === 'recurring_fault' ? 'new' : status;
 export const URGENCY_LABELS: Record<TaskUrgency, string> = {
   normal: "רגילה", high: "גבוהה", critical: "קריטית",
 };
