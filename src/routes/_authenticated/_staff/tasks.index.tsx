@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  applyPreset, presetsForRole, PRESET_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  applyPreset, presetsForRole, PRESET_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
   type Preset, type TaskStatus, type TaskType, type TaskUrgency, todayISO,
 } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
@@ -98,7 +98,7 @@ function TasksList() {
         </select>
         <select className={selectCls} value={s.status ?? ""} onChange={(e) => set({ status: e.target.value || undefined })} aria-label="סטטוס">
           <option value="">כל הסטטוסים</option>
-          {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
         <select className={selectCls} value={s.type ?? ""} onChange={(e) => set({ type: e.target.value || undefined })} aria-label="סוג">
           <option value="">כל הסוגים</option>

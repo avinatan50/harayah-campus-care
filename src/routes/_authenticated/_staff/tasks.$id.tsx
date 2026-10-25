@@ -11,9 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskForm, toFormValues, toPayload } from "@/components/TaskForm";
 import { StatusBadge, TaskRow } from "@/components/TaskRow";
+import { TaskResolution } from "@/components/TaskResolution";
 import { FilePicker } from "@/components/FilePicker";
 import {
-  FIELD_LABELS, profilesQuery, STATUS_LABELS, TYPE_LABELS, URGENCY_LABELS,
+  FIELD_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
   uploadTaskFiles, formatDate, type TaskStatus, type Task,
 } from "@/lib/tasks";
 import { pageHead } from "@/lib/metadata";
@@ -80,7 +81,7 @@ function TaskDetail() {
               disabled={busy}
               onChange={(e) => update({ status: e.target.value as TaskStatus }, "הסטטוס עודכן")}
             >
-              {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              {STATUS_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
             <Button variant="outline" size="sm" disabled={busy} onClick={() => { if (t.archived || confirm("להעביר את המשימה לארכיון? ניתן לשחזר אותה בכל עת.")) update({ archived: !t.archived }, t.archived ? "שוחזר מהארכיון" : "הועבר לארכיון"); }}>
               {t.archived ? <><ArchiveRestore className="size-4" /> שחזור</> : <><Archive className="size-4" /> ארכוב</>}
@@ -107,6 +108,8 @@ function TaskDetail() {
         {t.parent_id && <ParentLink id={t.parent_id} />}
         {t.related_task_id && <Original id={t.related_task_id} discovered={t.created_at} name={name} />}
       </div>
+
+      <TaskResolution key={`resolution-${t.updated_at}`} task={t} />
 
       <Tabs defaultValue="details">
         <TabsList className="flex-wrap">
@@ -162,7 +165,7 @@ function Original({ id, discovered, name }: { id: string; discovered: string; na
 function Decisions({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
   const q = useQuery({ queryKey: ["tasks", "decisions", taskId], queryFn: async () => { const r = await supabase.from("task_decisions").select("*").eq("task_id", taskId).order("created_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
   if (!q.data?.length) return null;
-  return <section className="mb-4 rounded-2xl border bg-card p-5"><h2 className="mb-3 font-semibold">החלטות</h2><ul className="space-y-3 text-sm">{q.data.map(d => <li key={d.id}><strong>{({ approved: "אושר", rejected: "נדחה", instruction: "הנחיה אחרת" } as Record<string, string>)[d.outcome]}</strong> · {fmt(d.created_at)} · {name(d.user_id)}<p className="whitespace-pre-wrap">{d.body}</p>{d.approved_amount !== null && <p>סכום מאושר: ₪{d.approved_amount.toLocaleString("he-IL")}</p>}<p>סטטוס המשך: {STATUS_LABELS[d.next_status]}</p></li>)}</ul></section>;
+  return <section className="mb-4 rounded-2xl border bg-card p-5"><h2 className="mb-3 font-semibold">החלטות</h2><ul className="space-y-3 text-sm">{q.data.map(d => <li key={d.id}><strong>{({ approved: "אושר", rejected: "נדחה", instruction: "הנחיה אחרת" } as Record<string, string>)[d.outcome]}</strong> · {fmt(d.created_at)} · {name(d.user_id)}<p className="whitespace-pre-wrap">{d.body}</p>{d.approved_amount !== null && <p>סכום מאושר: ₪{d.approved_amount.toLocaleString("he-IL")}</p>}<p>סטטוס המשך: {STATUS_LABELS[d.next_status]}</p>{d.destination_type && <p>הועבר ל: {TYPE_LABELS[d.destination_type]}</p>}</li>)}</ul></section>;
 }
 
 function Timeline({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
@@ -251,7 +254,7 @@ function Subtasks({ taskId }: { taskId: string }) {
         <form className="grid gap-2 md:grid-cols-[1fr_150px_150px_150px_auto]" onSubmit={async e => { e.preventDefault(); if (!draft.title.trim() || busy) return; setBusy(true); const r = await supabase.from("tasks").insert({ title: draft.title.trim(), assignee_id: draft.assignee_id || null, status: draft.status, explicit_status: true, due_date: draft.due_date || null, parent_id: taskId, request_key: draft.key }).select("id").single(); setBusy(false); if (r.error && r.error.code !== "23505") { toast.error("תת־המשימה לא נשמרה"); return; } setDraft({ title: "", assignee_id: "", status: "new", due_date: "", key: crypto.randomUUID() }); qc.invalidateQueries({ queryKey: ["tasks"] }); toast.success("תת־המשימה נוספה"); }}>
           <Input aria-label="כותרת תת־משימה" placeholder="כותרת תת־משימה" maxLength={200} value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} />
           <select aria-label="אחראי לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.assignee_id} onChange={e => setDraft({ ...draft, assignee_id: e.target.value })}><option value="">ללא אחראי</option>{profiles.data?.filter(p => p.active).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select>
-          <select aria-label="סטטוס לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as TaskStatus })}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select aria-label="סטטוס לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as TaskStatus })}>{STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           <Input aria-label="מועד יעד לתת־משימה" type="date" value={draft.due_date} onChange={e => setDraft({ ...draft, due_date: e.target.value })} />
           <Button disabled={busy || !draft.title.trim()}>{busy ? "שומר…" : "+ תת־משימה"}</Button>
         </form>
@@ -261,7 +264,7 @@ function Subtasks({ taskId }: { taskId: string }) {
 }
 function SubtaskRow({ task }: { task: Task }) {
   const qc = useQueryClient();
-  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data?.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
+  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data?.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
 }
 
 function Files({ taskId }: { taskId: string }) {
