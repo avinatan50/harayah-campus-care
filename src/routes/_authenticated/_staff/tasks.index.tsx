@@ -89,8 +89,8 @@ function TasksList() {
         <Button asChild><Link to="/tasks/new">+ משימה חדשה</Link></Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border bg-card p-3">
-        <Input placeholder="חיפוש חופשי או מספר…" defaultValue={s.q} className="h-9 w-56"
+      <div className="flex flex-wrap gap-2">
+        <Input placeholder="חיפוש חופשי או מספר…" defaultValue={s.q} className="mb-2 h-9 w-full"
           onKeyDown={(e) => { if (e.key === "Enter") set({ q: e.currentTarget.value || undefined }); }}
           onBlur={(e) => set({ q: e.currentTarget.value || undefined })} />
         <select className={selectCls} value={preset} onChange={(e) => set({ preset: e.target.value as Preset })} aria-label="תצוגה">
@@ -142,11 +142,11 @@ function TasksList() {
         )}
       </div>
 
-      <div className="rounded-2xl border bg-card">
+      <div>
         {list.isLoading ? <p className="p-5 text-sm text-muted-foreground">טוען…</p>
           : list.error ? <p className="p-5 text-sm text-destructive">שגיאה בטעינה <button className="underline" onClick={() => list.refetch()}>נסו שוב</button></p>
           : !list.data?.rows.length ? <p className="p-5 text-sm text-muted-foreground">לא נמצאו משימות.</p>
-          : <ul className="divide-y">{list.data.rows.map((t) => <TaskRow key={t.id} task={t} />)}</ul>}
+          : <ul className="grid gap-3">{list.data.rows.map((t) => <TaskRow key={t.id} task={t} />)}</ul>}
       </div>
     </div>
   );

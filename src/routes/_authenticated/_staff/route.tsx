@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, Menu, X, AlertTriangle, Bell, CheckCheck, BarChart3, Users, ListChecks } from "lucide-react";
+import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, MoreHorizontal, ChevronDown, AlertTriangle, Bell, CheckCheck, BarChart3, Users, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, ROLE_LABELS } from "@/lib/tasks";
@@ -60,7 +60,7 @@ function StaffLayout() {
 
   const nav = (
     <nav className="flex flex-col gap-1">
-      {NAV.map((n) => (
+      {NAV.filter(n => !['ארכיון', 'מפגעי בטיחות', 'התראות'].includes(n.label)).map((n) => (
         <Link
           key={n.label}
           to={n.to}
@@ -73,6 +73,8 @@ function StaffLayout() {
         </Link>
       ))}
       {me?.role==='super_admin'&&<Link to="/users" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"><Users className="size-4"/>ניהול משתמשים</Link>}
+      <Button variant="ghost" className="justify-start" aria-expanded={open} onClick={() => setOpen(!open)}><MoreHorizontal className="size-4"/>עוד<ChevronDown className="mr-auto size-4"/></Button>
+      {open && <div className="space-y-1 border-r pr-3"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link><Link to="/tasks" search={{preset:'archived'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Archive className="size-4"/>ארכיון</Link><Link to="/notifications" className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Bell className="size-4"/>התראות</Link></div>}
     </nav>
   );
 
@@ -98,26 +100,27 @@ function StaffLayout() {
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 bg-sidebar text-sidebar-foreground md:block">{sidebarBody}</aside>
-      <div className="no-print flex items-center justify-between bg-sidebar px-4 py-3 text-sidebar-foreground md:hidden">
-        <span className="font-display font-bold text-sidebar-primary">הראי״ה</span>
-        <Button variant="ghost" size="icon" aria-label="תפריט" onClick={() => setOpen(true)}><Menu /></Button>
+      <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 border-l bg-sidebar text-sidebar-foreground md:block">{sidebarBody}</aside>
+      <div className="min-w-0 flex-1">
+        <header className="no-print sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card px-4 md:px-8"><span className="font-display text-lg font-bold">הראי״ה</span><span className="text-sm">{me.fullName}</span></header>
+        <main className="min-w-0 p-4 pb-36 md:p-8"><Outlet /></main>
       </div>
-      {open && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 right-0 w-64 bg-sidebar text-sidebar-foreground">
-            <Button variant="ghost" size="icon" aria-label="סגירה" className="absolute left-3 top-3" onClick={() => setOpen(false)}><X /></Button>
-            {sidebarBody}
-          </aside>
-        </div>
-      )}
-      <main className="min-w-0 flex-1 p-4 md:p-8"><Outlet /></main>
+      {open && <div className="no-print fixed inset-x-3 bottom-20 z-50 rounded-xl border bg-card p-3 shadow-lg md:hidden">
+        <div className="grid grid-cols-2 gap-2"><Button asChild variant="ghost"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} onClick={()=>setOpen(false)}><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link></Button><Button asChild variant="ghost"><Link to="/tasks" search={{preset:'archived'}} onClick={()=>setOpen(false)}><Archive className="size-4"/>ארכיון</Link></Button><Button asChild variant="ghost"><Link to="/notifications" onClick={()=>setOpen(false)}><Bell className="size-4"/>התראות</Link></Button>{me.role==='super_admin'&&<Button asChild variant="ghost"><Link to="/users" onClick={()=>setOpen(false)}><Users className="size-4"/>ניהול משתמשים</Link></Button>}<Button variant="ghost" onClick={signOut}><LogOut className="size-4"/>יציאה</Button></div>
+      </div>}
+      <nav aria-label="תפריט תחתון" className="no-print fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t bg-card px-1 pb-1 md:hidden">
+        <Link to="/dashboard" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><LayoutDashboard className="size-5"/><span className="text-[10px]">לוח בקרה</span></Link>
+        <Link to="/tasks" search={{preset:'all'}} className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><ListTodo className="size-5"/><span className="text-[10px]">משימות</span></Link>
+        <Link to="/approvals" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><CheckCheck className="size-5"/><span className="text-[10px]">אישורים והחלטות</span></Link>
+        <Link to="/reports" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><BarChart3 className="size-5"/><span className="text-[10px]">דוחות</span></Link>
+        <Button variant="ghost" className="h-full flex-col gap-1 rounded-none px-1 text-muted-foreground" aria-expanded={open} onClick={()=>setOpen(!open)}><MoreHorizontal className="size-5"/><span className="text-[10px]">עוד</span></Button>
+      </nav>
       <Link
         to="/tasks/new"
-        className="no-print fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground shadow-lg md:hidden"
+        aria-label="משימה חדשה"
+        className="no-print fixed bottom-20 left-5 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
       >
-        <Plus className="size-5" /> משימה חדשה
+        <Plus className="size-6" />
       </Link>
     </div>
   );
