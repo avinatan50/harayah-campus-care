@@ -35,22 +35,23 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 export const FIELD_LABELS: Record<string, string> = {
   title: "כותרת", description: "תיאור", type: "סוג", status: "סטטוס", urgency: "דחיפות",
-  assignee_id: "אחראי", due_date: "מועד יעד", location: "מיקום", is_safety: "מפגע בטיחותי",
+  assignee_id: "אחראי", location: "מיקום", is_safety: "מפגע בטיחותי",
   equipment_disabled: "מושבת משימוש", next_step: "מה נדרש להתקדם", external_party: "גורם חיצוני",
-  delay_reason: "סיבת עיכוב", delay_impact: "השלכות העיכוב", requested_amount: "סכום מבוקש",
+  requested_amount: "סכום מבוקש",
   parent_id: "משימת אב", related_task_id: "משימה קשורה", archived: "ארכיון",
-  repair_notes: "תיעוד תיקון", safety_check: "בדיקת תקינות", safety_checked_at: "מועד בדיקת תקינות", safety_checked_by: "בודק תקינות", completed_by: "סגר את המשימה", completed_at: "מועד השלמה", waiting_since: "תחילת המתנה",
+  repair_notes: "תיעוד תיקון", safety_check: "בדיקת תקינות", safety_checked_at: "מועד בדיקת תקינות", safety_checked_by: "בודק תקינות", completed_by: "סגר את המשימה", completed_at: "מועד השלמה",
 };
 
 export const CLOSED_STATUSES: TaskStatus[] = ["closed", "cancelled"];
 export const todayISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year:'numeric',month:'2-digit',day:'2-digit' }).format(new Date());
 export const formatDate = (d: string | null) => d ? new Date(d).toLocaleString('he-IL', {timeZone:'Asia/Jerusalem',dateStyle:'short',timeStyle:'short'}) : '—';
-export const waitingDays = (d: string | null) => d ? Math.max(0,Math.floor((Date.now()-new Date(d).getTime())/86400000)) : 0;
+export const HIDDEN_TASK_FIELDS = ["due_date", "waiting_since", "delay_reason", "delay_impact"];
+export const initialStatusFor = (type: TaskType, selected: TaskStatus | ""): TaskStatus => type === "request" ? "waiting_approval" : type === "decision" ? "waiting_decision" : selected || "new";
 
 /** Presets a role may see: staff get "my_action" instead of safety hazards. */
 export const presetsForRole = (role: AppRole | undefined): Preset[] =>
   role === "staff"
-    ? ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "my_action", "archived", "all"]
+    ? ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "my_action", "all"]
     : ["open", "waiting_approval", "waiting_decision", "waiting_external", "done", "safety", "my_action", "archived", "all"];
 export const attentionPresetFor = (role: AppRole | undefined): Preset => (role === "staff" ? "my_action" : "safety");
 
@@ -68,18 +69,18 @@ export const PRESET_LABELS: Record<Preset, string> = {
   safety: "מפגעי בטיחות פתוחים",
   my_action: "ממתין לפעולה שלי",
   archived: "ארכיון",
-  all: "כל המשימות (ללא ארכיון)",
+  all: "כל המשימות",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyPreset<Q extends { eq: any; not: any; lt: any }>(q: Q, preset: Preset, userId?: string): Q {
+export function applyPreset<Q extends { eq: any; not: any; lt: any; in: any }>(q: Q, preset: Preset, _userId?: string): Q {
   const notClosed = `(${CLOSED_STATUSES.join(",")})`;
   switch (preset) {
     case "archived": return q.eq("archived", true);
     case "all": return q.eq("archived", false);
     case "open": return q.eq("archived", false).not("status", "in", notClosed);
     case "safety": return q.eq("archived", false).not("status", "in", notClosed).eq("is_safety", true);
-    case "my_action": return q.eq("archived", false).not("status", "in", notClosed).eq("assignee_id", userId ?? "00000000-0000-0000-0000-000000000000");
+    case "my_action": return q.eq("archived", false).in("status", ["waiting_approval", "waiting_decision"]);
     case "done": return q.eq("archived", false).eq("status", "closed");
     default: return q.eq("archived", false).eq("status", preset);
   }
@@ -153,9 +154,6 @@ export function suggestLocation(locs: LocationNode[], text: string): string | nu
   matches.sort((a, b) => b.name.length - a.name.length);
   return locationPath(locs, matches[0]!.id);
 }
-
-export const isOverdue = (t: Pick<Task, "due_date" | "status" | "archived">) =>
-  !!t.due_date && !t.archived && !CLOSED_STATUSES.includes(t.status) && t.due_date < todayISO();
 
 export async function uploadTaskFiles(taskId: string, files: File[], progress?: (done:number,total:number)=>void) {
   let done=0;
