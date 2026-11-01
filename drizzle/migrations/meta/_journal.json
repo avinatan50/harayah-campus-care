@@ -43,6 +43,13 @@
       "when": 1792915543820,
       "tag": "0005_task_resolution_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793522927699,
+      "tag": "0006_synchronized_workflows_and_account_deletion",
+      "breakpoints": true
     }
   ]
 }
