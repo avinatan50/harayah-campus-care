@@ -188,6 +188,7 @@ export type Database = {
           active: boolean
           code_hash: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           full_name: string
           id: string
@@ -197,6 +198,7 @@ export type Database = {
           active?: boolean
           code_hash?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           full_name: string
           id: string
@@ -206,6 +208,7 @@ export type Database = {
           active?: boolean
           code_hash?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           full_name?: string
           id?: string
@@ -576,6 +579,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_finish_user_deletion: {
+        Args: { _actor: string; _target: string }
+        Returns: undefined
+      }
+      admin_prepare_user_deletion: {
+        Args: { _actor: string; _target: string }
+        Returns: undefined
+      }
       admin_save_user: {
         Args: {
           _active: boolean

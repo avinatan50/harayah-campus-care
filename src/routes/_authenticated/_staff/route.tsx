@@ -21,14 +21,15 @@ function useRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
     const ch = supabase
-      .channel("tasks-live")
+      .channel(`tasks-live-${crypto.randomUUID()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "task_history" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "task_comments" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "task_decisions" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => qc.invalidateQueries({ queryKey: ["notifications"] }))
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const timer = setInterval(() => { qc.invalidateQueries({ queryKey: ["tasks"] }); }, 15000);
+    return () => { clearInterval(timer); supabase.removeChannel(ch); };
   }, [qc]);
 }
 
@@ -49,8 +50,8 @@ function StaffLayout() {
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const notifications=useQuery({queryKey:['notifications','unread',isStaff],queryFn:async()=>{const r=await supabase.from('notifications').select('id',{count:'exact',head:true}).is('read_at',null).not('kind','in',isStaff?'(overdue,safety)':'(overdue)');if(r.error)throw r.error;return r.count??0;}});
-  useEffect(()=>{supabase.rpc('refresh_due_notifications').then(({error})=>{if(!error)qc.invalidateQueries({queryKey:['notifications']});});const timer=setInterval(()=>{supabase.rpc('refresh_due_notifications').then(({error})=>{if(!error)qc.invalidateQueries({queryKey:['notifications']});});},60_000);return()=>clearInterval(timer);},[qc]);
+  const notifications=useQuery({queryKey:['notifications','unread',isStaff],queryFn:async()=>{const r=await supabase.from('notifications').select('id',{count:'exact',head:true}).is('read_at',null).not('kind','in',isStaff?'(overdue,due,safety)':'(overdue,due)');if(r.error)throw r.error;return r.count??0;}});
+
 
   async function signOut() {
     await qc.cancelQueries(); qc.clear();
@@ -60,7 +61,7 @@ function StaffLayout() {
 
   const nav = (
     <nav className="flex flex-col gap-1">
-      {NAV.filter(n => !['ארכיון', 'מפגעי בטיחות', 'התראות'].includes(n.label)).map((n) => (
+      {NAV.filter(n => !['ארכיון', 'מפגעי בטיחות', 'התראות'].includes(n.label) && (!isStaff || n.to !== '/reports')).map((n) => (
         <Link
           key={n.label}
           to={n.to}
@@ -74,7 +75,7 @@ function StaffLayout() {
       ))}
       {me?.role==='super_admin'&&<Link to="/users" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"><Users className="size-4"/>ניהול משתמשים</Link>}
       <Button variant="ghost" className="justify-start" aria-expanded={open} onClick={() => setOpen(!open)}><MoreHorizontal className="size-4"/>עוד<ChevronDown className="mr-auto size-4"/></Button>
-      {open && <div className="space-y-1 border-r pr-3"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link><Link to="/tasks" search={{preset:'archived'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Archive className="size-4"/>ארכיון</Link><Link to="/notifications" className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Bell className="size-4"/>התראות</Link></div>}
+      {open && <div className="space-y-1 border-r pr-3">{!isStaff && <><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link><Link to="/tasks" search={{preset:'archived'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Archive className="size-4"/>ארכיון</Link></>}<Link to="/notifications" className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Bell className="size-4"/>התראות</Link></div>}
     </nav>
   );
 
@@ -106,13 +107,13 @@ function StaffLayout() {
         <main className="min-w-0 p-4 pb-36 md:p-8"><Outlet /></main>
       </div>
       {open && <div className="no-print fixed inset-x-3 bottom-20 z-50 rounded-xl border bg-card p-3 shadow-lg md:hidden">
-        <div className="grid grid-cols-2 gap-2"><Button asChild variant="ghost"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} onClick={()=>setOpen(false)}><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link></Button><Button asChild variant="ghost"><Link to="/tasks" search={{preset:'archived'}} onClick={()=>setOpen(false)}><Archive className="size-4"/>ארכיון</Link></Button><Button asChild variant="ghost"><Link to="/notifications" onClick={()=>setOpen(false)}><Bell className="size-4"/>התראות</Link></Button>{me.role==='super_admin'&&<Button asChild variant="ghost"><Link to="/users" onClick={()=>setOpen(false)}><Users className="size-4"/>ניהול משתמשים</Link></Button>}<Button variant="ghost" onClick={signOut}><LogOut className="size-4"/>יציאה</Button></div>
+        <div className="grid grid-cols-2 gap-2">{!isStaff && <><Button asChild variant="ghost"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} onClick={()=>setOpen(false)}><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link></Button><Button asChild variant="ghost"><Link to="/tasks" search={{preset:'archived'}} onClick={()=>setOpen(false)}><Archive className="size-4"/>ארכיון</Link></Button></>}<Button asChild variant="ghost"><Link to="/notifications" onClick={()=>setOpen(false)}><Bell className="size-4"/>התראות</Link></Button>{me.role==='super_admin'&&<Button asChild variant="ghost"><Link to="/users" onClick={()=>setOpen(false)}><Users className="size-4"/>ניהול משתמשים</Link></Button>}<Button variant="ghost" onClick={signOut}><LogOut className="size-4"/>יציאה</Button></div>
       </div>}
-      <nav aria-label="תפריט תחתון" className="no-print fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t bg-card px-1 pb-1 md:hidden">
+      <nav aria-label="תפריט תחתון" className={`no-print fixed inset-x-0 bottom-0 z-40 grid h-16 ${isStaff ? "grid-cols-4" : "grid-cols-5"} border-t bg-card px-1 pb-1 md:hidden`}>
         <Link to="/dashboard" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><LayoutDashboard className="size-5"/><span className="text-[10px]">לוח בקרה</span></Link>
         <Link to="/tasks" search={{preset:'all'}} className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><ListTodo className="size-5"/><span className="text-[10px]">משימות</span></Link>
         <Link to="/approvals" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><CheckCheck className="size-5"/><span className="text-[10px]">אישורים והחלטות</span></Link>
-        <Link to="/reports" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><BarChart3 className="size-5"/><span className="text-[10px]">דוחות</span></Link>
+        {!isStaff && <Link to="/reports" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><BarChart3 className="size-5"/><span className="text-[10px]">דוחות</span></Link>}
         <Button variant="ghost" className="h-full flex-col gap-1 rounded-none px-1 text-muted-foreground" aria-expanded={open} onClick={()=>setOpen(!open)}><MoreHorizontal className="size-5"/><span className="text-[10px]">עוד</span></Button>
       </nav>
       <Link

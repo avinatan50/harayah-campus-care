@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   applyPreset, presetsForRole, PRESET_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
-  type Preset, type TaskStatus, type TaskType, type TaskUrgency, todayISO,
+  type Preset, type TaskStatus, type TaskType, type TaskUrgency,
 } from "@/lib/tasks";
 import { TaskRow } from "@/components/TaskRow";
 import { pageHead } from "@/lib/metadata";
@@ -21,8 +21,7 @@ const searchSchema = z.object({
   type: z.string().optional().catch(undefined),
   urgency: z.string().optional().catch(undefined),
   safety: z.boolean().optional().catch(undefined),
-  due: z.enum(["week", "none"]).optional().catch(undefined),
-  sort: z.enum(["created", "updated", "due"]).optional().catch(undefined),
+  sort: z.enum(["created", "updated"]).optional().catch(undefined),
 });
 type Search = z.infer<typeof searchSchema>;
 
@@ -43,7 +42,7 @@ function TasksList() {
   const isStaff = me.role === "staff";
   const allowed = presetsForRole(me.role);
   // Staff never see safety-hazard views; an old "safety" link opens their own queue instead.
-  const preset: Preset = s.preset === "safety" && isStaff ? "my_action" : s.preset ?? "all";
+  const preset: Preset = s.preset === "safety" && isStaff ? "my_action" : s.preset === "archived" && isStaff ? "all" : s.preset ?? "all";
   const safetyFilter = !isStaff && !!s.safety;
 
   const list = useQuery({
@@ -55,18 +54,13 @@ function TasksList() {
       if (s.urgency) q = q.eq("urgency", s.urgency as TaskUrgency);
       if (s.assignee) q = s.assignee === "none" ? q.is("assignee_id", null) : q.eq("assignee_id", s.assignee);
       if (safetyFilter) q = q.eq("is_safety", true);
-      if (s.due === "none") q = q.is("due_date", null);
-      if (s.due === "week") {
-        const w = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
-        q = q.gte("due_date", todayISO()).lte("due_date", w);
-      }
       if (s.q?.trim()) {
         const term = s.q.trim().replace(/[%,()]/g, " ");
         const asNum = /^\d+$/.test(term) ? `,number.eq.${term}` : "";
         q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%${asNum}`);
       }
-      const col = s.sort === "created" ? "created_at" : s.sort === "due" ? "due_date" : "updated_at";
-      q = q.order(col, { ascending: s.sort === "due", nullsFirst: false }).limit(500);
+      const col = s.sort === "created" ? "created_at" : "updated_at";
+      q = q.order(col, { ascending: false, nullsFirst: false }).limit(500);
       const { data, error, count } = await q;
       if (error) throw error;
       return { rows: data, count: count ?? data.length };
@@ -80,7 +74,6 @@ function TasksList() {
   if (s.urgency) active.push({ key: "urgency", label: `דחיפות ${URGENCY_LABELS[s.urgency as TaskUrgency]}` });
   if (s.assignee) active.push({ key: "assignee", label: s.assignee === "none" ? "ללא אחראי" : `אחראי: ${profiles.data?.find((p) => p.id === s.assignee)?.full_name ?? ""}` });
   if (safetyFilter) active.push({ key: "safety", label: "מפגע בטיחותי" });
-  if (s.due) active.push({ key: "due", label: { week: "יעד בשבוע הקרוב", none: "ללא מועד יעד" }[s.due] });
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -113,11 +106,6 @@ function TasksList() {
           <option value="none">ללא אחראי</option>
           {profiles.data?.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
-        <select className={selectCls} value={s.due ?? ""} onChange={(e) => set({ due: (e.target.value || undefined) as Search["due"] })} aria-label="מועד יעד">
-          <option value="">כל מועדי היעד</option>
-          <option value="week">בשבוע הקרוב</option>
-          <option value="none">ללא מועד</option>
-        </select>
         {!isStaff && (
           <label className="flex items-center gap-1.5 text-sm">
             <input type="checkbox" checked={!!s.safety} onChange={(e) => set({ safety: e.target.checked || undefined })} /> מפגע בטיחותי
@@ -126,7 +114,6 @@ function TasksList() {
         <select className={selectCls} value={s.sort ?? "updated"} onChange={(e) => set({ sort: e.target.value as Search["sort"] })} aria-label="מיון">
           <option value="updated">מיון: עדכון אחרון</option>
           <option value="created">מיון: תאריך פתיחה</option>
-          <option value="due">מיון: מועד יעד</option>
         </select>
       </div>
 

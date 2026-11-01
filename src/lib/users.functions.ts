@@ -7,7 +7,7 @@ export const listUsers = createServerFn({ method: 'POST' }).middleware([requireS
   const { data: allowed } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'super_admin' });
   if (!allowed) throw new Error('אין הרשאה לניהול משתמשים');
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
-  const { data: profiles, error } = await db.from('profiles').select('id,full_name,phone,email,active,created_at').order('full_name');
+  const { data: profiles, error } = await db.from('profiles').select('id,full_name,phone,email,active,created_at').is('deleted_at',null).order('full_name');
   if (error) throw new Error('טעינת המשתמשים נכשלה');
   const { data: roles, error: roleError } = await db.from('user_roles').select('user_id,role');
   if (roleError) throw new Error('טעינת התפקידים נכשלה');
@@ -69,8 +69,11 @@ export const deleteUser = createServerFn({ method: 'POST' }).middleware([require
     const { count } = await db.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'super_admin');
     if ((count ?? 0) <= 1) return { ok: false, error: 'לא ניתן למחוק את המנהל הראשי האחרון' };
   }
+  const prepared = await db.rpc('admin_prepare_user_deletion', { _actor: context.userId, _target: data.id });
+  if (prepared.error) return { ok: false, error: prepared.error.message.includes('LAST_ADMIN') ? 'לא ניתן למחוק את המנהל הראשי האחרון' : 'לא ניתן להכין את המחיקה' };
   const result = await db.auth.admin.deleteUser(data.id);
-  if (result.error) return { ok: false, error: 'המחיקה נכשלה; נסו שוב' };
-  await db.from('admin_audit').insert({ actor_id: context.userId, target_id: data.id, action: 'user_deleted' });
+  if (result.error && result.error.code !== 'user_not_found') return { ok: false, error: 'החשבון נחסם, אך המחיקה לא הושלמה; נסו שוב' };
+  const finished = await db.rpc('admin_finish_user_deletion', { _actor: context.userId, _target: data.id });
+  if (finished.error) return { ok: false, error: 'חשבון הכניסה נמחק; רישום המחיקה לא הושלם, נסו שוב' };
   return { ok: true };
 });

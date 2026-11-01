@@ -14,7 +14,7 @@ import { StatusBadge, TaskRow } from "@/components/TaskRow";
 import { TaskResolution } from "@/components/TaskResolution";
 import { FilePicker } from "@/components/FilePicker";
 import {
-  FIELD_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
+  HIDDEN_TASK_FIELDS, FIELD_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
   uploadTaskFiles, formatDate, type TaskStatus, type Task,
 } from "@/lib/tasks";
 import { pageHead } from "@/lib/metadata";
@@ -95,15 +95,12 @@ function TaskDetail() {
         )}
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
           <Info k="אחראי" v={name(t.assignee_id)} />
-          <Info k="מועד יעד" v={t.due_date ? new Date(t.due_date).toLocaleDateString("he-IL") : "—"} />
           <Info k="מיקום" v={t.location ?? "—"} />
-          <Info k="ממתין מאז" v={t.waiting_since ? fmt(t.waiting_since) : "—"} />
           <Info k="נפתח" v={`${fmt(t.created_at)} · ${name(t.created_by)}`} />
           <Info k="עדכון אחרון" v={`${fmt(t.updated_at)} · ${name(t.updated_by)}`} />
           <Info k="הושלם" v={t.completed_at ? `${fmt(t.completed_at)} · ${name(t.completed_by)}` : "—"} />
           {t.next_step && <Info k="נדרש להתקדם" v={t.next_step} />}
           {t.external_party && <Info k="גורם חיצוני" v={t.external_party} />}
-          {t.delay_reason && <Info k="סיבת עיכוב" v={t.delay_reason} />}
         </dl>
         {t.parent_id && <ParentLink id={t.parent_id} />}
         {t.related_task_id && <Original id={t.related_task_id} discovered={t.created_at} name={name} />}
@@ -179,7 +176,7 @@ function Timeline({ taskId, name }: { taskId: string; name: (id: string | null) 
   });
   return (
     <ol className="space-y-2 rounded-2xl border bg-card p-5 text-sm">
-      {q.data?.map((h) => (
+      {q.data?.filter(h => !h.field || !HIDDEN_TASK_FIELDS.includes(h.field)).map((h) => (
         <li key={h.id} className="border-r-2 border-primary/40 pr-3">
           <div className="text-xs text-muted-foreground">{fmt(h.created_at)} · {name(h.user_id)}</div>
           <div>
@@ -236,7 +233,7 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
 function Subtasks({ taskId }: { taskId: string }) {
   const qc = useQueryClient();
   const profiles = useQuery(profilesQuery);
-  const [draft, setDraft] = useState({ title: "", assignee_id: "", status: "new" as TaskStatus, due_date: "", key: crypto.randomUUID() });
+  const [draft, setDraft] = useState({ title: "", assignee_id: "", status: "new" as TaskStatus, key: crypto.randomUUID() });
   const [busy, setBusy] = useState(false);
   const q = useQuery({
     queryKey: ["tasks", "children", taskId],
@@ -251,11 +248,10 @@ function Subtasks({ taskId }: { taskId: string }) {
       <ul className="divide-y">{q.data?.map((t) => <SubtaskRow key={t.id} task={t} />)}</ul>
       {q.data?.length === 0 && <p className="p-5 text-sm text-muted-foreground">אין תת־משימות</p>}
       <div className="border-t p-4">
-        <form className="grid gap-2 md:grid-cols-[1fr_150px_150px_150px_auto]" onSubmit={async e => { e.preventDefault(); if (!draft.title.trim() || busy) return; setBusy(true); const r = await supabase.from("tasks").insert({ title: draft.title.trim(), assignee_id: draft.assignee_id || null, status: draft.status, explicit_status: true, due_date: draft.due_date || null, parent_id: taskId, request_key: draft.key }).select("id").single(); setBusy(false); if (r.error && r.error.code !== "23505") { toast.error("תת־המשימה לא נשמרה"); return; } setDraft({ title: "", assignee_id: "", status: "new", due_date: "", key: crypto.randomUUID() }); qc.invalidateQueries({ queryKey: ["tasks"] }); toast.success("תת־המשימה נוספה"); }}>
+        <form className="grid gap-2 md:grid-cols-[1fr_150px_150px_auto]" onSubmit={async e => { e.preventDefault(); if (!draft.title.trim() || busy) return; setBusy(true); const r = await supabase.from("tasks").insert({ title: draft.title.trim(), assignee_id: draft.assignee_id || null, status: draft.status, explicit_status: true, parent_id: taskId, request_key: draft.key }).select("id").single(); setBusy(false); if (r.error && r.error.code !== "23505") { toast.error("תת־המשימה לא נשמרה"); return; } setDraft({ title: "", assignee_id: "", status: "new", key: crypto.randomUUID() }); qc.invalidateQueries({ queryKey: ["tasks"] }); toast.success("תת־המשימה נוספה"); }}>
           <Input aria-label="כותרת תת־משימה" placeholder="כותרת תת־משימה" maxLength={200} value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} />
           <select aria-label="אחראי לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.assignee_id} onChange={e => setDraft({ ...draft, assignee_id: e.target.value })}><option value="">ללא אחראי</option>{profiles.data?.filter(p => p.active).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select>
           <select aria-label="סטטוס לתת־משימה" className="h-10 rounded-md border bg-card px-2" value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as TaskStatus })}>{STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          <Input aria-label="מועד יעד לתת־משימה" type="date" value={draft.due_date} onChange={e => setDraft({ ...draft, due_date: e.target.value })} />
           <Button disabled={busy || !draft.title.trim()}>{busy ? "שומר…" : "+ תת־משימה"}</Button>
         </form>
       </div>
