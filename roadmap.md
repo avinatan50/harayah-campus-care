@@ -1,9 +1,9 @@
 # Remaining stages
-- [ ] Personal action total equals waiting approval plus waiting decision; synchronize all task views
-- [ ] Staff menus omit reports, archive and personal-action menu entry; remove archive suffix for everyone
-- [ ] New requests and decisions automatically enter their waiting status; action available on every task entry
-- [ ] Diagnose and fix permanent user deletion
-- [ ] Remove all visible overdue, due-date, waiting-duration and delay fields and references
+- [x] Personal action total equals waiting approval plus waiting decision; shared predicates and cross-user synchronization enabled
+- [x] Staff menus omit reports, archive and personal-action menu entry; remove archive suffix for everyone
+- [x] New requests and decisions automatically enter their waiting status; action available on every task entry
+- [x] Permanent user deletion verified with an assigned task; login removed and historical task retained
+- [x] Remove all visible overdue, due-date, waiting-duration and delay fields and references
 - [x] Match uploaded reference design and mobile navigation; move safety/personal action, archive and notifications under More
 - [x] Current request: inline approval/decision notes and task/fault destination, approved status, ordered simplified statuses, collapsed advanced details, verified with the requesting user's account
 - [x] Requested UI adjustments: red role-specific button, RTL, description near title

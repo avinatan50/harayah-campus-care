@@ -110,7 +110,7 @@ export const meQuery = queryOptions({
 export const profilesQuery = queryOptions({
   queryKey: ["profiles"],
   queryFn: async () => {
-    const { data, error } = await supabase.from("profiles").select("id, full_name, active").is("deleted_at",null).order("full_name");
+    const { data, error } = await supabase.from("profiles").select("id, full_name, active").order("full_name");
     if (error) throw error;
     return data;
   },
