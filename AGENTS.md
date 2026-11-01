@@ -15,5 +15,7 @@
 - Permissions are enforced by RLS (is_staff/has_role also require profiles.active); route guards are UX only.
 - Task history, waiting_since and completed_at are written only by DB triggers on tasks; never write them from the client.
 - Dashboard counters and list filters must both use applyPreset() in src/lib/tasks.ts so counts match lists.
+- Task updates invalidate the shared tasks query prefix; unique realtime subscriptions plus periodic reconciliation keep all views current. New request/decision statuses are enforced by the insert trigger regardless of client selection.
+- Account deletion disables the target under the last-admin lock, deletes its login, then marks the detached profile as deleted for historical attribution; active user lists exclude deleted profiles to preserve task/history references without keeping login access.
 - Task selectors use STATUS_OPTIONS; closed is the retained storage value for handled tasks, legacy statuses normalize on database writes, and shared TaskResolution uses an atomic authenticated RPC for notes, approved status and destination changes.
 - New/replacement code pattern validation lives in the browser-safe access-code module and is enforced by both forms and server handlers; existing login codes remain usable to avoid locking out current accounts.
