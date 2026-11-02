@@ -1,4 +1,5 @@
 # Remaining stages
+- [x] Reporter sees their own previous calls under the quick-call form: title, description, attachment, current status, last status-change note
 - [x] Personal action total equals waiting approval plus waiting decision; shared predicates and cross-user synchronization enabled
 - [x] Staff menus omit reports, archive and personal-action menu entry; remove archive suffix for everyone
 - [x] New requests and decisions automatically enter their waiting status; action available on every task entry
