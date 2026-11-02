@@ -169,3 +169,42 @@ export async function uploadTaskFiles(taskId: string, files: File[], progress?: 
     progress?.(++done,files.length);
   }
 }
+
+export type ReportFile = { id: string; task_id: string; path: string; file_name: string; mime_type: string | null };
+export type MyReport = {
+  id: string; number: number; title: string; description: string | null;
+  status: TaskStatus; created_at: string; updated_at: string;
+  files: ReportFile[]; last_note: string | null;
+};
+
+/** Newest note a manager left while moving this call's status; null when none was given. */
+export function latestDecisionNote(decisions: { task_id: string; body: string; created_at: string }[], taskId: string): string | null {
+  const own = decisions.filter((d) => d.task_id === taskId);
+  if (!own.length) return null;
+  own.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return own[0]!.body;
+}
+
+/** The signed-in reporter's own calls, newest first. */
+export const myReportsQuery = (userId: string) => queryOptions({
+  queryKey: ["my-reports", userId],
+  staleTime: 15_000,
+  queryFn: async (): Promise<MyReport[]> => {
+    const { data: rows, error } = await supabase.from("tasks")
+      .select("id, number, title, description, status, created_at, updated_at")
+      .eq("created_by", userId).eq("archived", false)
+      .order("updated_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    const ids = (rows ?? []).map((r) => r.id);
+    if (!ids.length) return [];
+    const [f, d] = await Promise.all([
+      supabase.from("task_files").select("id, task_id, path, file_name, mime_type").in("task_id", ids).order("created_at"),
+      supabase.from("task_decisions").select("task_id, body, created_at").in("task_id", ids).order("created_at"),
+    ]);
+    if (f.error) throw f.error;
+    if (d.error) throw d.error;
+    const files = f.data ?? [];
+    const decisions = d.data ?? [];
+    return rows.map((r) => ({ ...r, files: files.filter((x) => x.task_id === r.id), last_note: latestDecisionNote(decisions, r.id) }));
+  },
+});

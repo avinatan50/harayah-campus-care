@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FilePicker } from "@/components/FilePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, uploadTaskFiles } from "@/lib/tasks";
+import { MyReports } from "@/components/MyReports";
 import { useNavigate } from "@tanstack/react-router";
 import { pageHead } from "@/lib/metadata";
 
