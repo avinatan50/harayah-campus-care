@@ -607,6 +607,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_user: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_waiting: {
         Args: { s: Database["public"]["Enums"]["task_status"] }

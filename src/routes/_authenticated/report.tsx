@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FilePicker } from "@/components/FilePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, uploadTaskFiles } from "@/lib/tasks";
+import { MyReports } from "@/components/MyReports";
 import { useNavigate } from "@tanstack/react-router";
 import { pageHead } from "@/lib/metadata";
 
@@ -50,6 +51,7 @@ function ReportPage() {
     setResult({ number: row.number, fileError });
     if (!fileError) { setTitle(""); setDescription(""); setFiles([]); setRequestKey(crypto.randomUUID()); }
     setProgress("");
+    qc.invalidateQueries({ queryKey: ["my-reports"] });
   }
 
   return (
@@ -92,6 +94,7 @@ function ReportPage() {
             <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? progress ? `מעלה קבצים ${progress}` : "שולח…" : "שליחת קריאה"}</Button>
           </form>
         )}
+        {me.data?.role === "user" && <MyReports userId={me.data.id} />}
       </main>
     </div>
   );
