@@ -71,6 +71,13 @@
       "when": 1793690912914,
       "tag": "0009_resolution_guard_and_login_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793691709915,
+      "tag": "0010_public_task_comments",
+      "breakpoints": true
     }
   ]
 }
