@@ -13,4 +13,5 @@ export const approvedAmount = (value: string): number | undefined => {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount < 0) throw new Error('סכום לא תקין');
   return amount;
-};
+};/** Waiting items change status only through the documented approval/decision RPC (DB trigger enforces it too). */
+export const requiresResolution = (status: TaskStatus): boolean => status === 'waiting_approval' || status === 'waiting_decision';

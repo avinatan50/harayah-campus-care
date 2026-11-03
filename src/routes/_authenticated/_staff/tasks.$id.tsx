@@ -12,6 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { TaskForm, toFormValues, toPayload } from "@/components/TaskForm";
 import { StatusBadge, TaskRow } from "@/components/TaskRow";
 import { TaskResolution } from "@/components/TaskResolution";
+import { requiresResolution } from "@/lib/task-resolution";
+
+function openResolution(taskId: string) {
+  toast.info("שינוי סטטוס מחייב תיעוד תוצאה והערה");
+  const el = document.getElementById(`note-${taskId}`);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  (el as HTMLTextAreaElement | null)?.focus();
+}
 import { FilePicker } from "@/components/FilePicker";
 import {
   HIDDEN_TASK_FIELDS, FIELD_LABELS, profilesQuery, STATUS_LABELS, STATUS_OPTIONS, TYPE_LABELS, URGENCY_LABELS,
@@ -48,7 +56,7 @@ function TaskDetail() {
     setBusy(true);
     const { data, error } = await supabase.from("tasks").update(patch).eq("id", id).eq("updated_at", task.data.updated_at).select("id");
     setBusy(false);
-    if (error) { toast.error(error.message.includes("SAFETY_CHECK_REQUIRED") ? "נדרשים תיעוד תיקון ובדיקת תקינות חדשה" : "השמירה נכשלה"); return; }
+    if (error) { if (error.message.includes("RESOLUTION_REQUIRED")) { toast.error("יש לתעד אישור/החלטה עם הערה"); openResolution(id); return; } toast.error(error.message.includes("SAFETY_CHECK_REQUIRED") ? "נדרשים תיעוד תיקון ובדיקת תקינות חדשה" : "השמירה נכשלה"); return; }
     if (!data?.length) { setConflict(true); toast.error("משתמש אחר עדכן את המשימה. טענו את הגרסה העדכנית."); return; }
     toast.success(msg);
     refresh();
@@ -79,7 +87,7 @@ function TaskDetail() {
               className="h-9 rounded-md border border-input bg-card px-2 text-sm"
               value={t.status}
               disabled={busy}
-              onChange={(e) => update({ status: e.target.value as TaskStatus }, "הסטטוס עודכן")}
+              onChange={(e) => { if (requiresResolution(t.status)) { openResolution(t.id); return; } update({ status: e.target.value as TaskStatus }, "הסטטוס עודכן"); }}
             >
               {STATUS_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
@@ -260,7 +268,8 @@ function Subtasks({ taskId }: { taskId: string }) {
 }
 function SubtaskRow({ task }: { task: Task }) {
   const qc = useQueryClient();
-  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data?.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
+  const navigate = useNavigate();
+  return <li className="flex flex-wrap items-center gap-2"><div className="min-w-0 flex-1"><TaskRow task={task} /></div><select aria-label={`סטטוס ${task.title}`} className="m-2 h-9 rounded-md border bg-card px-2 text-sm" value={task.status} onChange={async e => { if (requiresResolution(task.status)) { toast.info("נדרש לתעד אישור/החלטה בדף תת־המשימה"); void navigate({ to: "/tasks/$id", params: { id: task.id } }); return; } const r = await supabase.from("tasks").update({ status: e.target.value as TaskStatus }).eq("id", task.id).eq("updated_at", task.updated_at).select("id"); if (r.error || !r.data?.length) toast.error("הסטטוס לא עודכן; טענו את הגרסה העדכנית"); qc.invalidateQueries({ queryKey: ["tasks"] }); }}>{STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></li>;
 }
 
 function Files({ taskId }: { taskId: string }) {
