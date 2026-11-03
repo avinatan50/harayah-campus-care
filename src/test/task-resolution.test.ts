@@ -27,3 +27,12 @@ describe('Task resolution rules', () => {
     expect(normalizeStatus('recurring_fault')).toBe('new');
   });
 });
+import { requiresResolution } from '@/lib/task-resolution';
+describe('requiresResolution', () => {
+  it('locks only waiting approval/decision', () => {
+    expect(requiresResolution('waiting_approval')).toBe(true);
+    expect(requiresResolution('waiting_decision')).toBe(true);
+    expect(requiresResolution('in_progress')).toBe(false);
+    expect(requiresResolution('approved')).toBe(false);
+  });
+});
