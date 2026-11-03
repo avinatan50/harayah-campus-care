@@ -20,3 +20,6 @@
 - Task selectors use STATUS_OPTIONS; closed is the retained storage value for handled tasks, legacy statuses normalize on database writes, and shared TaskResolution uses an atomic authenticated RPC for notes, approved status and destination changes.
 - A regular user reaches only their own calls: owner-scoped SELECT policies (created_by = auth.uid(), gated by is_active_user) on tasks, task_decisions and task_files plus the matching storage.objects read policy; the reporter history view depends on them and staff rights stay separate.
 - New/replacement code pattern validation lives in the browser-safe access-code module and is enforced by both forms and server handlers; existing login codes remain usable to avoid locking out current accounts.
+- Tasks in waiting_approval/waiting_decision change status only via record_task_resolution (DB trigger guard_waiting_status checks a transaction-local flag); UI status selects redirect to the resolution form — keeps every approval/decision documented.
+- Staff views rely on Realtime plus catch-up on tab focus/reconnect and a 5-minute visible-only reconcile; no short polling, to cut redundant load.
+- login_attempts rows older than 7 days are pruned by an insert trigger; rate-limit windows are at most 60 minutes, so pruning never affects limits.
