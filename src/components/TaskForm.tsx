@@ -1,3 +1,4 @@
+import { requiresResolution } from '@/lib/task-resolution';
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
@@ -95,10 +96,11 @@ export function TaskForm({ initial, mode, onSubmit, busy }: {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="status">סטטוס</Label>
-          <select id="status" disabled={mode === "create" && ["request", "decision"].includes(v.type)} className={selectCls} value={v.status} onChange={(e) => upd("status", e.target.value as TaskStatus | "")}>
+          <select id="status" disabled={(mode === "create" && ["request", "decision"].includes(v.type)) || (mode === "edit" && !!initial && requiresResolution(initial.status as TaskStatus))} className={selectCls} value={v.status} onChange={(e) => upd("status", e.target.value as TaskStatus | "")}>
             {mode === "create" && <option value="">ברירת מחדל ({defaultStatusHint})</option>}
             {STATUS_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </select>
+          {mode === "edit" && !!initial && requiresResolution(initial.status as TaskStatus) && <p className="text-xs text-muted-foreground">שינוי הסטטוס מתבצע דרך טופס האישור/ההחלטה</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="urg">דחיפות</Label>
