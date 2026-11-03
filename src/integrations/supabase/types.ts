@@ -221,6 +221,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          is_public: boolean
           task_id: string
           user_id: string
         }
@@ -228,6 +229,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          is_public?: boolean
           task_id: string
           user_id?: string
         }
@@ -235,6 +237,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          is_public?: boolean
           task_id?: string
           user_id?: string
         }
