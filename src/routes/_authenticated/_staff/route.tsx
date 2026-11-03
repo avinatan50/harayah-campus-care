@@ -28,8 +28,13 @@ function useRealtime() {
       .on("postgres_changes", { event: "*", schema: "public", table: "task_decisions" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => qc.invalidateQueries({ queryKey: ["notifications"] }))
       .subscribe();
-    const timer = setInterval(() => { qc.invalidateQueries({ queryKey: ["tasks"] }); }, 15000);
-    return () => { clearInterval(timer); supabase.removeChannel(ch); };
+    // Realtime is primary; reconcile only on tab return / reconnect, plus a rare visible-only safety net.
+    const catchUp = () => { qc.invalidateQueries({ queryKey: ["tasks"] }); qc.invalidateQueries({ queryKey: ["notifications"] }); };
+    const onVisible = () => { if (document.visibilityState === "visible") catchUp(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", catchUp);
+    const timer = setInterval(() => { if (document.visibilityState === "visible") catchUp(); }, 300000);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", catchUp); supabase.removeChannel(ch); };
   }, [qc]);
 }
 
