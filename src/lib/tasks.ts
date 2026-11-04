@@ -177,7 +177,7 @@ export type MyReport = {
   files: ReportFile[]; last_note: string | null;
 };
 
-/** Newest note a manager left while moving this call's status; null when none was given. */
+/** Newest reporter-visible update (public note or approval/decision note); null when none. */
 export function latestDecisionNote(decisions: { task_id: string; body: string; created_at: string }[], taskId: string): string | null {
   const own = decisions.filter((d) => d.task_id === taskId);
   if (!own.length) return null;
@@ -197,14 +197,16 @@ export const myReportsQuery = (userId: string) => queryOptions({
     if (error) throw error;
     const ids = (rows ?? []).map((r) => r.id);
     if (!ids.length) return [];
-    const [f, d] = await Promise.all([
+    const [f, d, c] = await Promise.all([
       supabase.from("task_files").select("id, task_id, path, file_name, mime_type").in("task_id", ids).order("created_at"),
       supabase.from("task_decisions").select("task_id, body, created_at").in("task_id", ids).order("created_at"),
+      supabase.from("task_comments").select("task_id, body, created_at").in("task_id", ids).eq("is_public", true).order("created_at"),
     ]);
+    if (c.error) throw c.error;
     if (f.error) throw f.error;
     if (d.error) throw d.error;
     const files = f.data ?? [];
-    const decisions = d.data ?? [];
+    const decisions = [...(d.data ?? []), ...(c.data ?? [])];
     return rows.map((r) => ({ ...r, files: files.filter((x) => x.task_id === r.id), last_note: latestDecisionNote(decisions, r.id) }));
   },
 });

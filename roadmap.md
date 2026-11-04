@@ -16,4 +16,7 @@
 - [x] Private notifications and preferences
 - [x] Reports, Hebrew CSV and printable PDF
 - [x] Mobile/file usability, metadata and end-to-end verification for current request
-- [ ] Direct verification of the staff account named בדיקה — blocked by the previously declined account permission; no new request made
+- [ ] Direct verification of the staff account named בדיקה — blocked by the previously declined account permission; no new request made- [x] Super admin: user management in visible nav instead of reports
+- [x] Staff: no "more" menu, all tabs visible
+- [x] Dashboard cards: "done" before "waiting approval" for all
+- [x] Notes: internal/public choice, latest update line, reporter sees only public+decision notes (RLS)

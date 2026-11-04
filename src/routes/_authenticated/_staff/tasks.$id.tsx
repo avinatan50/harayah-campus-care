@@ -112,6 +112,7 @@ function TaskDetail() {
         </dl>
         {t.parent_id && <ParentLink id={t.parent_id} />}
         {t.related_task_id && <Original id={t.related_task_id} discovered={t.created_at} name={name} />}
+        <LatestUpdate taskId={id} name={name} />
       </div>
 
       <TaskResolution key={`resolution-${t.updated_at}`} task={t} />
@@ -204,6 +205,7 @@ function Timeline({ taskId, name }: { taskId: string; name: (id: string | null) 
 function Comments({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
   const qc = useQueryClient();
   const [body, setBody] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const q = useQuery({
     queryKey: ["tasks", "comments", taskId],
     queryFn: async () => {
@@ -218,21 +220,26 @@ function Comments({ taskId, name }: { taskId: string; name: (id: string | null) 
     setSending(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSending(false); return; }
-    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim().slice(0, 5000), user_id: u.user.id });
+    const { error } = await supabase.from("task_comments").insert({ task_id: taskId, body: body.trim().slice(0, 5000), user_id: u.user.id, is_public: isPublic });
     setSending(false);
     if (error) { toast.error("ההערה לא נשמרה"); return; }
-    setBody("");
+    setBody(""); setIsPublic(false);
     qc.invalidateQueries({ queryKey: ["tasks", "comments", taskId] });
+    qc.invalidateQueries({ queryKey: ["tasks", "latest-update", taskId] });
   }
   return (
     <div className="space-y-3 rounded-2xl border bg-card p-5">
       {q.data?.map((c) => (
         <div key={c.id} className="rounded-lg bg-muted p-3 text-sm">
-          <div className="text-xs text-muted-foreground">{name(c.user_id)} · {fmt(c.created_at)}</div>
+          <div className="text-xs text-muted-foreground">{name(c.user_id)} · {fmt(c.created_at)} · <span className={c.is_public ? "font-semibold text-info" : ""}>{c.is_public ? "ציבורית" : "פנימית"}</span></div>
           <p className="mt-1 whitespace-pre-wrap">{c.body}</p>
         </div>
       ))}
       <Textarea rows={2} maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="הוספת הערה…" />
+      <div className="flex gap-2" role="radiogroup" aria-label="נראות ההערה">
+        <Button type="button" size="sm" role="radio" aria-checked={!isPublic} variant={isPublic ? "outline" : "default"} onClick={() => setIsPublic(false)}>פנימית (צוות הניהול בלבד)</Button>
+        <Button type="button" size="sm" role="radio" aria-checked={isPublic} variant={isPublic ? "default" : "outline"} onClick={() => setIsPublic(true)}>ציבורית (גלויה לפותח הקריאה)</Button>
+      </div>
       <Button size="sm" onClick={add} disabled={sending || !body.trim()}>{sending ? "שומר…" : "הוספה"}</Button>
     </div>
   );
@@ -311,6 +318,31 @@ function Files({ taskId }: { taskId: string }) {
           qc.invalidateQueries({ queryKey: ["tasks", "files", taskId] });
         }}>{busy ? `מעלה ${progress}` : "העלאה"}</Button>
       )}
+    </div>
+  );
+}
+
+function LatestUpdate({ taskId, name }: { taskId: string; name: (id: string | null) => string }) {
+  const q = useQuery({
+    queryKey: ["tasks", "latest-update", taskId],
+    queryFn: async () => {
+      const [c, d] = await Promise.all([
+        supabase.from("task_comments").select("body, created_at, user_id, is_public").eq("task_id", taskId).order("created_at", { ascending: false }).limit(1),
+        supabase.from("task_decisions").select("body, created_at, user_id").eq("task_id", taskId).order("created_at", { ascending: false }).limit(1),
+      ]);
+      if (c.error) throw c.error; if (d.error) throw d.error;
+      const items = [
+        ...(c.data ?? []).map((x) => ({ ...x, kind: x.is_public ? "הערה ציבורית" : "הערה פנימית" })),
+        ...(d.data ?? []).map((x) => ({ ...x, kind: "הערת אישור/החלטה" })),
+      ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+      return items[0] ?? null;
+    },
+  });
+  if (!q.data) return null;
+  return (
+    <div className="mt-4 rounded-lg bg-muted px-3 py-2 text-sm">
+      <div className="text-xs text-muted-foreground">עדכון אחרון · {q.data.kind} · {name(q.data.user_id)} · {fmt(q.data.created_at)}</div>
+      <p className="mt-1 whitespace-pre-wrap">{q.data.body}</p>
     </div>
   );
 }
