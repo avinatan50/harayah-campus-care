@@ -16,6 +16,9 @@ export function MyReports({ userId }: { userId: string }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
         qc.invalidateQueries({ queryKey: ["my-reports"] });
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "task_comments" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-reports"] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
@@ -56,7 +59,7 @@ function ReportCard({ report }: { report: MyReport }) {
       {report.files.length > 0 && <ReportMedia files={report.files} />}
       {report.last_note && (
         <div className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm">
-          <span className="font-semibold">הערה אחרונה: </span>
+          <span className="font-semibold">עדכון אחרון: </span>
           <span className="whitespace-pre-wrap">{report.last_note}</span>
         </div>
       )}

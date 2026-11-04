@@ -20,4 +20,14 @@ describe("latestDecisionNote", () => {
   it("is null when no note was ever given", () => {
     expect(latestDecisionNote([], A)).toBeNull();
   });
+});import { latestDecisionNote as pickLatest } from '@/lib/tasks';
+import { describe as d2, it as i2, expect as e2 } from 'vitest';
+d2('reporter latest update', () => {
+  i2('picks the newest among public notes and decisions', () => {
+    const rows = [
+      { task_id: 't', body: 'decision', created_at: '2026-01-01T10:00:00Z' },
+      { task_id: 't', body: 'public note', created_at: '2026-01-02T10:00:00Z' },
+    ];
+    e2(pickLatest(rows, 't')).toBe('public note');
+  });
 });
