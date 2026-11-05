@@ -78,6 +78,13 @@
       "when": 1793691709915,
       "tag": "0010_public_task_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793836975200,
+      "tag": "0011_push_and_maintenance",
+      "breakpoints": true
     }
   ]
 }

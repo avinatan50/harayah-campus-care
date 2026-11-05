@@ -18,9 +18,11 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
 import { Route as AuthenticatedStaffApprovalsRouteImport } from './routes/_authenticated/_staff/approvals'
 import { Route as AuthenticatedStaffDashboardRouteImport } from './routes/_authenticated/_staff/dashboard'
+import { Route as AuthenticatedStaffMaintenanceRouteImport } from './routes/_authenticated/_staff/maintenance'
 import { Route as AuthenticatedStaffNotificationsRouteImport } from './routes/_authenticated/_staff/notifications'
 import { Route as AuthenticatedStaffReportsRouteImport } from './routes/_authenticated/_staff/reports'
 import { Route as AuthenticatedStaffUsersRouteImport } from './routes/_authenticated/_staff/users'
+import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push-dispatch'
 import { Route as AuthenticatedStaffTasksIndexRouteImport } from './routes/_authenticated/_staff/tasks.index'
 import { Route as AuthenticatedStaffTasksIdRouteImport } from './routes/_authenticated/_staff/tasks.$id'
 import { Route as AuthenticatedStaffTasksNewRouteImport } from './routes/_authenticated/_staff/tasks.new'
@@ -70,6 +72,12 @@ const AuthenticatedStaffDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedStaffRouteRoute,
   } as any)
+const AuthenticatedStaffMaintenanceRoute =
+  AuthenticatedStaffMaintenanceRouteImport.update({
+    id: '/maintenance',
+    path: '/maintenance',
+    getParentRoute: () => AuthenticatedStaffRouteRoute,
+  } as any)
 const AuthenticatedStaffNotificationsRoute =
   AuthenticatedStaffNotificationsRouteImport.update({
     id: '/notifications',
@@ -86,6 +94,11 @@ const AuthenticatedStaffUsersRoute = AuthenticatedStaffUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedStaffRouteRoute,
+} as any)
+const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
+  id: '/api/public/push-dispatch',
+  path: '/api/public/push-dispatch',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedStaffTasksIndexRoute =
   AuthenticatedStaffTasksIndexRouteImport.update({
@@ -114,9 +127,11 @@ export interface FileRoutesByFullPath {
   '/report': typeof AuthenticatedReportRoute
   '/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/maintenance': typeof AuthenticatedStaffMaintenanceRoute
   '/notifications': typeof AuthenticatedStaffNotificationsRoute
   '/reports': typeof AuthenticatedStaffReportsRoute
   '/users': typeof AuthenticatedStaffUsersRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks/': typeof AuthenticatedStaffTasksIndexRoute
@@ -129,9 +144,11 @@ export interface FileRoutesByTo {
   '/report': typeof AuthenticatedReportRoute
   '/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/maintenance': typeof AuthenticatedStaffMaintenanceRoute
   '/notifications': typeof AuthenticatedStaffNotificationsRoute
   '/reports': typeof AuthenticatedStaffReportsRoute
   '/users': typeof AuthenticatedStaffUsersRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/tasks': typeof AuthenticatedStaffTasksIndexRoute
@@ -147,9 +164,11 @@ export interface FileRoutesById {
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/_authenticated/_staff/approvals': typeof AuthenticatedStaffApprovalsRoute
   '/_authenticated/_staff/dashboard': typeof AuthenticatedStaffDashboardRoute
+  '/_authenticated/_staff/maintenance': typeof AuthenticatedStaffMaintenanceRoute
   '/_authenticated/_staff/notifications': typeof AuthenticatedStaffNotificationsRoute
   '/_authenticated/_staff/reports': typeof AuthenticatedStaffReportsRoute
   '/_authenticated/_staff/users': typeof AuthenticatedStaffUsersRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/_authenticated/_staff/tasks/$id': typeof AuthenticatedStaffTasksIdRoute
   '/_authenticated/_staff/tasks/new': typeof AuthenticatedStaffTasksNewRoute
   '/_authenticated/_staff/tasks/': typeof AuthenticatedStaffTasksIndexRoute
@@ -164,9 +183,11 @@ export interface FileRouteTypes {
     | '/report'
     | '/approvals'
     | '/dashboard'
+    | '/maintenance'
     | '/notifications'
     | '/reports'
     | '/users'
+    | '/api/public/push-dispatch'
     | '/tasks/$id'
     | '/tasks/new'
     | '/tasks/'
@@ -179,9 +200,11 @@ export interface FileRouteTypes {
     | '/report'
     | '/approvals'
     | '/dashboard'
+    | '/maintenance'
     | '/notifications'
     | '/reports'
     | '/users'
+    | '/api/public/push-dispatch'
     | '/tasks/$id'
     | '/tasks/new'
     | '/tasks'
@@ -196,9 +219,11 @@ export interface FileRouteTypes {
     | '/_authenticated/report'
     | '/_authenticated/_staff/approvals'
     | '/_authenticated/_staff/dashboard'
+    | '/_authenticated/_staff/maintenance'
     | '/_authenticated/_staff/notifications'
     | '/_authenticated/_staff/reports'
     | '/_authenticated/_staff/users'
+    | '/api/public/push-dispatch'
     | '/_authenticated/_staff/tasks/$id'
     | '/_authenticated/_staff/tasks/new'
     | '/_authenticated/_staff/tasks/'
@@ -209,6 +234,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   SetupRoute: typeof SetupRoute
+  ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -276,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffDashboardRouteImport
       parentRoute: typeof AuthenticatedStaffRouteRoute
     }
+    '/_authenticated/_staff/maintenance': {
+      id: '/_authenticated/_staff/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof AuthenticatedStaffMaintenanceRouteImport
+      parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
     '/_authenticated/_staff/notifications': {
       id: '/_authenticated/_staff/notifications'
       path: '/notifications'
@@ -296,6 +329,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedStaffUsersRouteImport
       parentRoute: typeof AuthenticatedStaffRouteRoute
+    }
+    '/api/public/push-dispatch': {
+      id: '/api/public/push-dispatch'
+      path: '/api/public/push-dispatch'
+      fullPath: '/api/public/push-dispatch'
+      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_staff/tasks/': {
       id: '/_authenticated/_staff/tasks/'
@@ -324,6 +364,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedStaffRouteRouteChildren {
   AuthenticatedStaffApprovalsRoute: typeof AuthenticatedStaffApprovalsRoute
   AuthenticatedStaffDashboardRoute: typeof AuthenticatedStaffDashboardRoute
+  AuthenticatedStaffMaintenanceRoute: typeof AuthenticatedStaffMaintenanceRoute
   AuthenticatedStaffNotificationsRoute: typeof AuthenticatedStaffNotificationsRoute
   AuthenticatedStaffReportsRoute: typeof AuthenticatedStaffReportsRoute
   AuthenticatedStaffUsersRoute: typeof AuthenticatedStaffUsersRoute
@@ -336,6 +377,7 @@ const AuthenticatedStaffRouteRouteChildren: AuthenticatedStaffRouteRouteChildren
   {
     AuthenticatedStaffApprovalsRoute: AuthenticatedStaffApprovalsRoute,
     AuthenticatedStaffDashboardRoute: AuthenticatedStaffDashboardRoute,
+    AuthenticatedStaffMaintenanceRoute: AuthenticatedStaffMaintenanceRoute,
     AuthenticatedStaffNotificationsRoute: AuthenticatedStaffNotificationsRoute,
     AuthenticatedStaffReportsRoute: AuthenticatedStaffReportsRoute,
     AuthenticatedStaffUsersRoute: AuthenticatedStaffUsersRoute,
@@ -369,6 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   RegisterRoute: RegisterRoute,
   SetupRoute: SetupRoute,
+  ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

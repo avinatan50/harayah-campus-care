@@ -115,12 +115,119 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          cycle_start: string
+          id: string
+          location_id: string
+          note: string | null
+          routine_id: string
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          cycle_start: string
+          id?: string
+          location_id: string
+          note?: string | null
+          routine_id: string
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          cycle_start?: string
+          id?: string
+          location_id?: string
+          note?: string | null
+          routine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_checks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_checks_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_routine_locations: {
+        Row: {
+          location_id: string
+          routine_id: string
+        }
+        Insert: {
+          location_id: string
+          routine_id: string
+        }
+        Update: {
+          location_id?: string
+          routine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_routine_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_routine_locations_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_routines: {
+        Row: {
+          active: boolean
+          anchor_date: string
+          created_at: string
+          description: string | null
+          id: string
+          interval_months: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          anchor_date?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval_months?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          anchor_date?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval_months?: number
+          title?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           approval: boolean
           assignment: boolean
           changes: boolean
           due: boolean
+          push_enabled: boolean
+          push_muted_until: string | null
           safety: boolean
           user_id: string
         }
@@ -129,6 +236,8 @@ export type Database = {
           assignment?: boolean
           changes?: boolean
           due?: boolean
+          push_enabled?: boolean
+          push_muted_until?: string | null
           safety?: boolean
           user_id?: string
         }
@@ -137,6 +246,8 @@ export type Database = {
           assignment?: boolean
           changes?: boolean
           due?: boolean
+          push_enabled?: boolean
+          push_muted_until?: string | null
           safety?: boolean
           user_id?: string
         }
@@ -213,6 +324,63 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+        }
+        Relationships: []
+      }
+      push_outbox: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          sent_at: string | null
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: number
+          sent_at?: string | null
+          title: string
+          url?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: number
+          sent_at?: string | null
+          title?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -603,6 +771,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_push_outbox: {
+        Args: { _limit: number }
+        Returns: {
+          body: string
+          created_at: string
+          id: number
+          sent_at: string | null
+          title: string
+          url: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "push_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      enqueue_admin_push: {
+        Args: { _body: string; _title: string; _url: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -642,6 +832,14 @@ export type Database = {
         Returns: string
       }
       refresh_due_notifications: { Args: never; Returns: undefined }
+      register_push: {
+        Args: { _auth: string; _endpoint: string; _p256dh: string }
+        Returns: undefined
+      }
+      status_label: {
+        Args: { s: Database["public"]["Enums"]["task_status"] }
+        Returns: string
+      }
       submit_report: {
         Args: { _description: string; _title: string }
         Returns: {
@@ -656,6 +854,7 @@ export type Database = {
           number: number
         }[]
       }
+      unregister_push: { Args: { _endpoint: string }; Returns: undefined }
     }
     Enums: {
       app_role: "super_admin" | "staff" | "user"
