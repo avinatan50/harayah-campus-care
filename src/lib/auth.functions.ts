@@ -152,6 +152,7 @@ export const registerUser = createServerFn({ method: "POST" })
     }
     await db.from("user_roles").insert({ user_id: id, role: "user" });
     await recordAttempt("signup", ip, true);
+    try { const { flushOutbox } = await import("@/lib/push.server"); await flushOutbox(db); } catch (e) { console.error("push flush", e); }
     return { ok: true, data: await issueSession(id, email) };
   });
 

@@ -23,3 +23,6 @@
 - Tasks in waiting_approval/waiting_decision change status only via record_task_resolution (DB trigger guard_waiting_status checks a transaction-local flag); UI status selects redirect to the resolution form — keeps every approval/decision documented.
 - Staff views rely on Realtime plus catch-up on tab focus/reconnect and a 5-minute visible-only reconcile; no short polling, to cut redundant load.
 - login_attempts rows older than 7 days are pruned by an insert trigger; rate-limit windows are at most 60 minutes, so pruning never affects limits.
+- Push notifications: DB triggers enqueue super-admin events into push_outbox (service-role only); src/lib/push.server.ts delivers via Web Push with VAPID keys derived from the VAPID_SEED secret; flushed by a 1-minute managed schedule (/api/public/push-dispatch) plus kickPush after client activity — no external push provider needed.
+- The push worker public/push-sw.js is registered under scope /push-scope/ so it never controls or caches app pages; installability is manifest-only.
+- Periodic maintenance tables (maintenance_*) are super_admin-only by RLS and never feed dashboard counters or task lists; cycles are computed from anchor_date + interval_months in src/lib/maintenance.ts.

@@ -10,6 +10,9 @@ import { FilePicker } from "@/components/FilePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, uploadTaskFiles } from "@/lib/tasks";
 import { MyReports } from "@/components/MyReports";
+import { PushToggle } from "@/components/PushToggle";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { kickPush } from "@/lib/push.functions";
 import { useNavigate } from "@tanstack/react-router";
 import { pageHead } from "@/lib/metadata";
 
@@ -52,6 +55,7 @@ function ReportPage() {
     if (!fileError) { setTitle(""); setDescription(""); setFiles([]); setRequestKey(crypto.randomUUID()); }
     setProgress("");
     qc.invalidateQueries({ queryKey: ["my-reports"] });
+    kickPush().catch(() => undefined);
   }
 
   return (
@@ -94,7 +98,9 @@ function ReportPage() {
             <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? progress ? `מעלה קבצים ${progress}` : "שולח…" : "שליחת קריאה"}</Button>
           </form>
         )}
+        <div className="mt-6"><PushToggle /></div>
         {me.data?.role === "user" && <MyReports userId={me.data.id} />}
+        <InstallPrompt />
       </main>
     </div>
   );

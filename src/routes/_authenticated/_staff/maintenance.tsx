@@ -46,7 +46,7 @@ function MaintenancePage() {
     e.preventDefault();
     if (!form.title.trim()) return;
     const { error } = await supabase.from("maintenance_routines").insert({ title: form.title.trim(), description: form.description.trim() || null, interval_months: form.interval });
-    if (error) return toast.error("השמירה נכשלה");
+    if (error) { toast.error("השמירה נכשלה"); return; }
     setForm({ title: "", description: "", interval: 1 }); setAdding(false); refresh();
   }
 
@@ -107,7 +107,7 @@ function RoutineCard({ routine, locs, links, checks, onChange }: { routine: Rout
   }
   async function toTask() {
     const remaining = sorted.filter((id) => !cycleChecks.some((c) => c.location_id === id));
-    if (!remaining.length) return toast.info("כל המיקומים כבר נבדקו בסבב הזה");
+    if (!remaining.length) { toast.info("כל המיקומים כבר נבדקו בסבב הזה"); return; }
     if (!confirm("ליצור משימה רגילה (גלויה לצוות) עבור המיקומים שנותרו?")) return;
     const { error } = await supabase.from("tasks").insert({ title: routine.title, type: "task", description: `${routine.description ?? ""}\n\nמיקומים שנותרו:\n${remaining.map((id) => "• " + locationPath(locs, id)).join("\n")}`.trim() });
     if (error) toast.error("יצירת המשימה נכשלה"); else toast.success("נוצרה משימה רגילה לצוות");

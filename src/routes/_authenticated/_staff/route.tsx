@@ -1,10 +1,12 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, MoreHorizontal, ChevronDown, AlertTriangle, Bell, CheckCheck, BarChart3, Users, ListChecks } from "lucide-react";
+import { LayoutDashboard, ListTodo, Archive, Plus, LogOut, MoreHorizontal, ChevronDown, AlertTriangle, Bell, CheckCheck, BarChart3, Users, ListChecks, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery, ROLE_LABELS } from "@/lib/tasks";
+import { kickPush } from "@/lib/push.functions";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export const Route = createFileRoute("/_authenticated/_staff")({
   beforeLoad: async ({ context }) => {
@@ -20,9 +22,11 @@ export const Route = createFileRoute("/_authenticated/_staff")({
 function useRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
+    let kick: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => { clearTimeout(kick); kick = setTimeout(() => { kickPush().catch(() => undefined); }, 1500); };
     const ch = supabase
       .channel(`tasks-live-${crypto.randomUUID()}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => { qc.invalidateQueries({ queryKey: ["tasks"] }); flush(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "task_history" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "task_comments" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "task_decisions" }, () => qc.invalidateQueries({ queryKey: ["tasks"] }))
@@ -34,7 +38,7 @@ function useRealtime() {
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", catchUp);
     const timer = setInterval(() => { if (document.visibilityState === "visible") catchUp(); }, 300000);
-    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", catchUp); supabase.removeChannel(ch); };
+    return () => { clearTimeout(kick); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", catchUp); supabase.removeChannel(ch); };
   }, [qc]);
 }
 
@@ -79,6 +83,7 @@ function StaffLayout() {
         </Link>
       ))}
       {me?.role==='super_admin'&&<Link to="/users" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"><Users className="size-4"/>ניהול משתמשים</Link>}
+      {me?.role==='super_admin'&&<Link to="/maintenance" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold"><ClipboardCheck className="size-4"/>ביקורות ותחזוקה</Link>}
       {!isStaff && <Button variant="ghost" className="justify-start" aria-expanded={open} onClick={() => setOpen(!open)}><MoreHorizontal className="size-4"/>עוד<ChevronDown className="mr-auto size-4"/></Button>}
       {open && !isStaff && <div className="space-y-1 border-r pr-3"><Link to="/reports" className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><BarChart3 className="size-4"/>דוחות וייצוא</Link>{!isStaff && <><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link><Link to="/tasks" search={{preset:'archived'}} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Archive className="size-4"/>ארכיון</Link></>}<Link to="/notifications" className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-muted"><Bell className="size-4"/>התראות</Link></div>}
     </nav>
@@ -112,8 +117,9 @@ function StaffLayout() {
         <main className="min-w-0 p-4 pb-36 md:p-8"><Outlet /></main>
       </div>
       {open && !isStaff && <div className="no-print fixed inset-x-3 bottom-20 z-50 rounded-xl border bg-card p-3 shadow-lg md:hidden">
-        <div className="grid grid-cols-2 gap-2"><Button asChild variant="ghost"><Link to="/reports" onClick={()=>setOpen(false)}><BarChart3 className="size-4"/>דוחות וייצוא</Link></Button>{!isStaff && <><Button asChild variant="ghost"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} onClick={()=>setOpen(false)}><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link></Button><Button asChild variant="ghost"><Link to="/tasks" search={{preset:'archived'}} onClick={()=>setOpen(false)}><Archive className="size-4"/>ארכיון</Link></Button></>}<Button asChild variant="ghost"><Link to="/notifications" onClick={()=>setOpen(false)}><Bell className="size-4"/>התראות</Link></Button><Button variant="ghost" onClick={signOut}><LogOut className="size-4"/>יציאה</Button></div>
+        <div className="grid grid-cols-2 gap-2"><Button asChild variant="ghost"><Link to="/reports" onClick={()=>setOpen(false)}><BarChart3 className="size-4"/>דוחות וייצוא</Link></Button>{!isStaff && <><Button asChild variant="ghost"><Link to="/tasks" search={{preset:isStaff?'my_action':'safety'}} onClick={()=>setOpen(false)}><ListChecks className="size-4"/>{isStaff?'ממתין לפעולה שלי':'מפגעי בטיחות'}</Link></Button><Button asChild variant="ghost"><Link to="/tasks" search={{preset:'archived'}} onClick={()=>setOpen(false)}><Archive className="size-4"/>ארכיון</Link></Button></>}<Button asChild variant="ghost"><Link to="/notifications" onClick={()=>setOpen(false)}><Bell className="size-4"/>התראות</Link></Button>{me.role==='super_admin'&&<Button asChild variant="ghost"><Link to="/maintenance" onClick={()=>setOpen(false)}><ClipboardCheck className="size-4"/>ביקורות ותחזוקה</Link></Button>}<Button variant="ghost" onClick={signOut}><LogOut className="size-4"/>יציאה</Button></div>
       </div>}
+      <InstallPrompt />
       <nav aria-label="תפריט תחתון" className={`no-print fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t bg-card px-1 pb-1 md:hidden`}>
         <Link to="/dashboard" className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><LayoutDashboard className="size-5"/><span className="text-[10px]">לוח בקרה</span></Link>
         <Link to="/tasks" search={{preset:'all'}} className="mobile-tab flex flex-col items-center justify-center gap-1 text-muted-foreground"><ListTodo className="size-5"/><span className="text-[10px]">משימות</span></Link>

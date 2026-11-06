@@ -20,3 +20,8 @@
 - [x] Staff: no "more" menu, all tabs visible
 - [x] Dashboard cards: "done" before "waiting approval" for all
 - [x] Notes: internal/public choice, latest update line, reporter sees only public+decision notes (RLS)
+
+- [x] Installable phone app (manifest + icons from the school logo, install banner)
+- [x] Phone push notifications: super admin gets every system change (incl. registrations) with mute/permanent off; any user can enable on their device
+- [x] Notifications screen tabs: "my notifications" + "send notification" per status change to reporter and/or selected staff
+- [x] Hidden periodic maintenance (super admin only) with per-location partial checks and progress
